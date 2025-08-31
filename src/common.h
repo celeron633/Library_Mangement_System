@@ -9,6 +9,12 @@
 #define MAX_RECORD_SIZE 1024
 #endif
 
+// 数据文件路径配置
+#define DATA_DIR "./data"
+#define ADMIN_FILE DATA_DIR "/admin.dat"
+#define USER_FILE DATA_DIR "/user.dat"
+#define BOOK_FILE DATA_DIR "/book.dat"
+
 typedef struct admin
 {
     char admin_name[20];

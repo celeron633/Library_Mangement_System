@@ -12,4 +12,17 @@ elseif(WIN32)
 endif()
 
 add_executable(${OUTPUT_BIN_NAME} 
-    main.c utils.c common.h utils.h)
+    main_new.c 
+    utils.c 
+    user_management.c
+    book_management.c
+    admin_management.c
+    system_ui.c
+    data_storage.c
+    common.h 
+    utils.h
+    user_management.h
+    book_management.h
+    admin_management.h
+    system_ui.h
+    data_storage.h)
