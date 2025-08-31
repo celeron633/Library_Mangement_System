@@ -1,67 +1,13 @@
-#include <stdio.h>
+#include "common.h"
+#include "utils.h"
+
+#ifdef _WIN32
 #include <conio.h>
+#endif
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-
-#ifndef MAX_BUFFER_SIZE
-#define MAX_BUFFER_SIZE 1024
-#endif
-
-#ifndef MAX_RECORD_SIZE
-#define MAX_RECORD_SIZE 1024
-#endif
-
-
-typedef struct admin
-{
-	char admin_name[20];
-	char admin_password[20];
-}admin;
-
-typedef struct user
-{
-	char user_name[20];
-	char user_password[20];
-	float balance;
-	int isVIP;
-}user;
-
-typedef struct book
-{
-	int book_id;
-	char book_name[48];
-	char book_author[48];
-	char book_introduce[100];
-	float book_price;
-	int book_storage_count;
-}book;
-
-typedef struct shoplist
-{
-	int book_id;
-	char book_author[48];
-	float book_price;
-	int buy_count;
-}shoplist;
-
-typedef struct books
-{
-	book data;
-	struct books *next;
-}books;
-
-typedef struct admins
-{
-	admin data;
-	struct admins* next;
-}admins;
-
-typedef struct users
-{
-	user data;
-	struct users* next;
-}users;
 
 admin admin_buffer[MAX_BUFFER_SIZE];
 int admins_count;
@@ -74,7 +20,6 @@ int books_count;
 
 shoplist shop_list[MAX_BUFFER_SIZE];
 int bought_times_count;
-
 
 admins *admin_first_node;
 users *user_first_node;
@@ -91,8 +36,6 @@ void print_user_menu(void);
 void admin_book_info_look_up();
 void system_config_login();
 void print_system_config_menu();
-
-
 
 void user_buffer_to_linklist()
 {
@@ -116,7 +59,7 @@ void user_buffer_to_linklist()
 		tail=new_node;
 		tail->next=NULL;
 	}
-	printf("ÓÃ»§Êı¾İÁ´±í´´½¨³É¹¦!\n");
+	printf("ç”¨æˆ·æ•°æ®é“¾è¡¨åˆ›å»ºæˆåŠŸ!\n");
 }
 
 void linklist_to_user_buffer(users* u)
@@ -127,7 +70,7 @@ void linklist_to_user_buffer(users* u)
 
 	if (user_first_node==NULL)
 	{
-		printf("ÓÃ»§Êı¾İÁ´±íÃ»ÓĞ³õÊ¼»¯!\n");
+		printf("ç”¨æˆ·æ•°æ®é“¾è¡¨æ²¡æœ‰åˆå§‹åŒ–!\n");
 		return;
 	}
 	else
@@ -142,7 +85,7 @@ void linklist_to_user_buffer(users* u)
 			i++;
 		}
 		users_count=i;
-		printf("ÓÃ»§Êı¾İÁ´±í³É¹¦¸´ÖÆµ½»º´æÊı×é\n");
+		printf("ç”¨æˆ·æ•°æ®é“¾è¡¨æˆåŠŸå¤åˆ¶åˆ°ç¼“å­˜æ•°ç»„\n");
 	}
 }
 
@@ -170,7 +113,7 @@ void book_buffer_to_linklist()
 		tail=new_node;
 		tail->next=NULL;
 	}
-	printf("Êé±¾Êı¾İÁ´±í´´½¨³É¹¦!\n");
+	printf("ä¹¦æœ¬æ•°æ®é“¾è¡¨åˆ›å»ºæˆåŠŸ!\n");
 }
 
 void linklist_to_book_buffer(books* u)
@@ -181,7 +124,7 @@ void linklist_to_book_buffer(books* u)
 
 	if (book_first_node==NULL)
 	{
-		printf("´íÎó! Êé±¾Êı¾İÁ´±íÃ»ÓĞ³õÊ¼»¯\n");
+		printf("é”™è¯¯! ä¹¦æœ¬æ•°æ®é“¾è¡¨æ²¡æœ‰åˆå§‹åŒ–\n");
 		return;
 	}
 	else
@@ -201,7 +144,7 @@ void linklist_to_book_buffer(books* u)
 		}
 
 		books_count=i;
-		printf("Êé±¾Êı¾İÁ´±íÒÑ¾­¸´ÖÆµ½»º´æÊı×é\n");
+		printf("ä¹¦æœ¬æ•°æ®é“¾è¡¨å·²ç»å¤åˆ¶åˆ°ç¼“å­˜æ•°ç»„\n");
 	}
 }
 
@@ -214,8 +157,8 @@ void read_admins_file()
 	fp=fopen("./admin.dat","r");
 	if (fp==NULL)
 	{
-		printf("¹ÜÀíÔ±ÅäÖÃÊı¾İÎÄ¼şÔÚµ±Ç°Ä¿Â¼ÏÂ²»´æÔÚ!\n");
-		printf("ÈÎÒâ°´¼üÆô¶¯Ïòµ¼´´½¨¹ÜÀíÔ±!");
+		printf("ç®¡ç†å‘˜é…ç½®æ•°æ®æ–‡ä»¶åœ¨å½“å‰ç›®å½•ä¸‹ä¸å­˜åœ¨!\n");
+		printf("ä»»æ„æŒ‰é”®å¯åŠ¨å‘å¯¼åˆ›å»ºç®¡ç†å‘˜!");
 		getchar();
 		create_admin_wizard();
 	}
@@ -227,7 +170,7 @@ void read_admins_file()
 		{
 			fscanf(fp,"%s%s",admin_buffer[i].admin_name,admin_buffer[i].admin_password);
 		}
-		printf("³É¹¦´Ó´ÅÅÌ¶ÁÈ¡¹ÜÀíÔ±ÅäÖÃÎÄ¼ş!\n");
+		printf("æˆåŠŸä»ç£ç›˜è¯»å–ç®¡ç†å‘˜é…ç½®æ–‡ä»¶!\n");
 		fclose(fp);
 	}
 }
@@ -242,7 +185,7 @@ void write_admins_file()
 	fp=fopen("./admin.dat","w");
 	if (fp==NULL)
 	{
-		printf("·¢ÉúÒ»¸öÎ´ÖªµÄ¶ÁĞ´´íÎó! ¹ÜÀíÔ±ÅäÖÃÎÄ¼ş´´½¨Ê§°Ü\n");
+		printf("å‘ç”Ÿä¸€ä¸ªæœªçŸ¥çš„è¯»å†™é”™è¯¯! ç®¡ç†å‘˜é…ç½®æ–‡ä»¶åˆ›å»ºå¤±è´¥\n");
 		return;
 	}
 	else
@@ -253,7 +196,7 @@ void write_admins_file()
 		{
 			fprintf(fp,"%s %s\n",admin_buffer[i].admin_name,admin_buffer[i].admin_password);
 		}
-		printf("³É¹¦½«¹ÜÀíÔ±»º´æĞ´Èë´ÅÅÌ!\n");
+		printf("æˆåŠŸå°†ç®¡ç†å‘˜ç¼“å­˜å†™å…¥ç£ç›˜!\n");
 		fclose(fp);
 	}
 }
@@ -266,9 +209,9 @@ void read_users_file()
 	fp=fopen("./user.dat","r");
 	if (fp==NULL)
 	{
-		printf("ÓÃ»§ÅäÖÃÎÄ¼şÔÚµ±Ç°Ä¿Â¼ÏÂÃ»ÓĞÕÒµ½!\n");
-		printf("ËùÒÔÃ»ÓĞ¼ÓÔØÈÎºÎÓÃ»§Êı¾İ\n");
-		printf("ÈÎÒâ°´¼ü·µ»ØÏµÍ³µÇÂ¼²Ëµ¥");
+		printf("ç”¨æˆ·é…ç½®æ–‡ä»¶åœ¨å½“å‰ç›®å½•ä¸‹æ²¡æœ‰æ‰¾åˆ°!\n");
+		printf("æ‰€ä»¥æ²¡æœ‰åŠ è½½ä»»ä½•ç”¨æˆ·æ•°æ®\n");
+		printf("ä»»æ„æŒ‰é”®è¿”å›ç³»ç»Ÿç™»å½•èœå•");
 		fflush(stdin);
 		getchar();
 		print_system_menu();
@@ -281,7 +224,7 @@ void read_users_file()
 		{
 			fscanf(fp,"%s%s%f%d",user_buffer[i].user_name,user_buffer[i].user_password,&user_buffer[i].balance,&user_buffer[i].isVIP);
 		}
-		printf("³É¹¦´Ó´ÅÅÌ¶ÁÈ¡ÓÃ»§ÅäÖÃÎÄ¼ş\n");
+		printf("æˆåŠŸä»ç£ç›˜è¯»å–ç”¨æˆ·é…ç½®æ–‡ä»¶\n");
 		fclose(fp);
 	}
 }
@@ -295,7 +238,7 @@ void write_users_file()
 	fp=fopen("./user.dat","w");
 	if (fp==NULL)
 	{
-		printf("·¢ÉúÒ»¸öÎ´ÖªµÄ¶ÁĞ´´íÎó ÓÃ»§ÅäÖÃÎÄ¼ş´´½¨Ê§°Ü!");
+		printf("å‘ç”Ÿä¸€ä¸ªæœªçŸ¥çš„è¯»å†™é”™è¯¯ ç”¨æˆ·é…ç½®æ–‡ä»¶åˆ›å»ºå¤±è´¥!");
 	}
 	else
 	{
@@ -305,7 +248,7 @@ void write_users_file()
 		{
 			fprintf(fp,"%s %s %f %d\n",user_buffer[i].user_name,user_buffer[i].user_password,user_buffer[i].balance,user_buffer[i].isVIP);
 		}
-		printf("³É¹¦½«ÓÃ»§ÅäÖÃ»º´æĞ´Èë´ÅÅÌ!\n");
+		printf("æˆåŠŸå°†ç”¨æˆ·é…ç½®ç¼“å­˜å†™å…¥ç£ç›˜!\n");
 		fclose(fp);
 	}
 }
@@ -318,9 +261,9 @@ void read_books_file()
 	fp=fopen("./book.dat","r");
 	if (fp==NULL)
 	{
-		printf("ÔÚµ±Ç°Ä¿Â¼ÏÂÃ»ÓĞÕÒµ½Í¼ÊéĞÅÏ¢ÅäÖÃÎÄ¼ş\n");
-		printf("ËùÒÔÃ»ÓĞ¼ÓÔØÈÎºÎÍ¼ÊéĞÅÏ¢\n");
-		printf("ÈÎÒâ°´¼ü·µ»ØÏµÍ³µÇÂ¼²Ëµ¥\n");
+		printf("åœ¨å½“å‰ç›®å½•ä¸‹æ²¡æœ‰æ‰¾åˆ°å›¾ä¹¦ä¿¡æ¯é…ç½®æ–‡ä»¶\n");
+		printf("æ‰€ä»¥æ²¡æœ‰åŠ è½½ä»»ä½•å›¾ä¹¦ä¿¡æ¯\n");
+		printf("ä»»æ„æŒ‰é”®è¿”å›ç³»ç»Ÿç™»å½•èœå•\n");
 		getchar();
 	}
 	else
@@ -331,7 +274,7 @@ void read_books_file()
 		{
 			fscanf(fp,"%d%s%s%s%f%d",&book_buffer[i].book_id,book_buffer[i].book_name,book_buffer[i].book_author,book_buffer[i].book_introduce,&book_buffer[i].book_price,&book_buffer[i].book_storage_count);
 		}
-		printf("³É¹¦´Ó´ÅÅÌ¶ÁÈ¡Êé¼®ÅäÖÃÎÄ¼ş!\n");
+		printf("æˆåŠŸä»ç£ç›˜è¯»å–ä¹¦ç±é…ç½®æ–‡ä»¶!\n");
 		fclose(fp);
 	}
 }
@@ -345,7 +288,7 @@ void write_books_file()
 	fp=fopen("./book.dat","w");
 	if (fp==NULL)
 	{
-		printf("·¢ÉúÒ»¸öÎ´ÖªµÄ¶ÁĞ´´íÎó Êé¼®ÅäÖÃÎÄ¼ş´´½¨Ê§°Ü!");
+		printf("å‘ç”Ÿä¸€ä¸ªæœªçŸ¥çš„è¯»å†™é”™è¯¯ ä¹¦ç±é…ç½®æ–‡ä»¶åˆ›å»ºå¤±è´¥!");
 	}
 	else
 	{
@@ -355,7 +298,7 @@ void write_books_file()
 		{
 			fprintf(fp,"%d %s %s %s %f %d\n",book_buffer[i].book_id,book_buffer[i].book_name,book_buffer[i].book_author,book_buffer[i].book_introduce,book_buffer[i].book_price,book_buffer[i].book_storage_count);
 		}
-		printf("³É¹¦½«Êé¼®×ÊÁÏ»º´æĞ´Èë´ÅÅÌ!\n");
+		printf("æˆåŠŸå°†ä¹¦ç±èµ„æ–™ç¼“å­˜å†™å…¥ç£ç›˜!\n");
 		fclose(fp);
 	}
 }
@@ -396,14 +339,14 @@ void create_admin_wizard(void)
 	
 	while(1)
 	{
-		system("cls");
+		clear_screen();
 		printf("#######################################################\n");
-		printf("»¶Ó­À´µ½¹ÜÀíÔ±´´½¨Ïòµ¼\n");
+		printf("æ¬¢è¿æ¥åˆ°ç®¡ç†å‘˜åˆ›å»ºå‘å¯¼\n");
 		printf("#######################################################\n");
 
 		while(1)
 		{
-			printf("ÊäÈëÄãµÄÃû×Ö:");
+			printf("è¾“å…¥ä½ çš„åå­—:");
 			scanf("%s",name);
 
 			for(j=0;j<admins_count;j++)
@@ -416,10 +359,10 @@ void create_admin_wizard(void)
 
 			if (override_flag==1)
 			{
-				printf("´íÎó! ´æÔÚÍ¬Ãû¹ÜÀíÔ±! \n");
-				printf("ÈÎÒâ°´¼üÖØĞÂÊäÈë!\n");
+				printf("é”™è¯¯! å­˜åœ¨åŒåç®¡ç†å‘˜! \n");
+				printf("ä»»æ„æŒ‰é”®é‡æ–°è¾“å…¥!\n");
 				override_flag=0;
-				system("pause");
+				pause_and_wait();
 			}
 			else
 			{
@@ -429,13 +372,13 @@ void create_admin_wizard(void)
 
 		while(1)
 		{
-			printf("ÇëÊäÈëÃÜÂë(ÏÔÊ¾ÎªĞÇºÅ):");
+			printf("è¯·è¾“å…¥å¯†ç (æ˜¾ç¤ºä¸ºæ˜Ÿå·):");
 			input_secret(password);
-			printf("ÇëÈ·ÈÏÃÜÂë:");
+			printf("è¯·ç¡®è®¤å¯†ç :");
 			input_secret(password_confirm);
 			if (strcmp(password,password_confirm)==0)
 			{
-				printf("³É¹¦! ĞÂµÄ¹ÜÀíÔ±ÒÑ¾­Ìí¼Ó\n");
+				printf("æˆåŠŸ! æ–°çš„ç®¡ç†å‘˜å·²ç»æ·»åŠ \n");
 				strcpy(admin_buffer[admins_count].admin_name,name);
 				strcpy(admin_buffer[admins_count].admin_password,password);
 				admins_count++;
@@ -443,10 +386,10 @@ void create_admin_wizard(void)
 			}
 			else
 			{
-				printf("Á½´ÎÊäÈëµÄÃÜÂë²»Í¬ ÇëÖØÊÔ!\n");
+				printf("ä¸¤æ¬¡è¾“å…¥çš„å¯†ç ä¸åŒ è¯·é‡è¯•!\n");
 			}
 		}
-		printf("¼ÌĞø´´½¨¹ÜÀíÔ±?(y/n):");
+		printf("ç»§ç»­åˆ›å»ºç®¡ç†å‘˜?(y/n):");
 		fflush(stdin);
 		scanf("%s",choice);
 		if (strcmp(choice,"n")==0 || strcmp(choice,"no")==0 || strcmp(choice,"0")==0)
@@ -454,10 +397,10 @@ void create_admin_wizard(void)
 			break;
 		}
 	}
-	printf("ÕıÔÚĞ´Èë´ÅÅÌ.............\n");
+	printf("æ­£åœ¨å†™å…¥ç£ç›˜.............\n");
 	write_admins_file(admin_buffer);
-	printf("Ğ´Èë´ÅÅÌ³É¹¦........ÈÎÒâ°´¼ü·µ»Ø\n");
-	system("pause");
+	printf("å†™å…¥ç£ç›˜æˆåŠŸ........ä»»æ„æŒ‰é”®è¿”å›\n");
+	pause_and_wait();
 	print_system_config_menu();
 }
 
@@ -472,14 +415,14 @@ void add_admin_wizard(void)
 
 	while(1)
 	{
-		system("cls");
+		clear_screen();
 		printf("#######################################################\n");
-		printf("»¶Ó­À´µ½¹ÜÀíÔ±Ìí¼ÓÏòµ¼\n\n");
+		printf("æ¬¢è¿æ¥åˆ°ç®¡ç†å‘˜æ·»åŠ å‘å¯¼\n\n");
 		printf("#######################################################\n");
 
 		while(1)
 		{
-			printf("ÄãµÄÃû×Ö:");
+			printf("ä½ çš„åå­—:");
 			
 			scanf("%s",name);
 
@@ -493,8 +436,8 @@ void add_admin_wizard(void)
 
 			if (override_flag==1)
 			{
-				printf("´íÎó ´æÔÚÍ¬Ãû¹ÜÀíÔ±\n");
-				printf("ÇëÁíÍâÊ¹ÓÃ±ğµÄÃû×Ö!\n");
+				printf("é”™è¯¯ å­˜åœ¨åŒåç®¡ç†å‘˜\n");
+				printf("è¯·å¦å¤–ä½¿ç”¨åˆ«çš„åå­—!\n");
 			}
 			else
 			{
@@ -504,13 +447,13 @@ void add_admin_wizard(void)
 
 		while(1)
 		{
-			printf("ÇëÊäÈëÃÜÂë(ÏÔÊ¾ÎªĞÇºÅ):");
+			printf("è¯·è¾“å…¥å¯†ç (æ˜¾ç¤ºä¸ºæ˜Ÿå·):");
 			input_secret(password);
-			printf("ÇëÈ·ÈÏÃÜÂë:");
+			printf("è¯·ç¡®è®¤å¯†ç :");
 			input_secret(password_confirm);
 			if (strcmp(password,password_confirm)==0)
 			{
-				printf("ºÃµÄ! ³É¹¦Ìí¼ÓĞÂµÄ¹ÜÀíÔ±\n");
+				printf("å¥½çš„! æˆåŠŸæ·»åŠ æ–°çš„ç®¡ç†å‘˜\n");
 				strcpy(admin_buffer[admins_count].admin_name,name);
 				strcpy(admin_buffer[admins_count].admin_password,password);
 				admins_count++;
@@ -518,10 +461,10 @@ void add_admin_wizard(void)
 			}
 			else
 			{
-				printf("Á½´ÎÊäÈëµÄÃÜÂë²»Í¬ ÇëÖØÊÔ\n");
+				printf("ä¸¤æ¬¡è¾“å…¥çš„å¯†ç ä¸åŒ è¯·é‡è¯•\n");
 			}
 		}
-		printf("¼ÌĞøÌí¼Ó¹ÜÀíÔ±?(y/n):");
+		printf("ç»§ç»­æ·»åŠ ç®¡ç†å‘˜?(y/n):");
 		fflush(stdin);
 		scanf("%s",choice);
 		if (strcmp(choice,"n")==0 || strcmp(choice,"no")==0 || strcmp(choice,"0")==0)
@@ -539,19 +482,19 @@ void admin_show_all_books(books* b)
 
 	if (b==NULL)
 	{
-		printf("Ã»ÓĞÈÎºÎÍ¼Êé,ÈÎÒâ°´¼ü·µ»Ø¹ÜÀíÔ±²Ëµ¥!");
-		system("pause");
+		printf("æ²¡æœ‰ä»»ä½•å›¾ä¹¦,ä»»æ„æŒ‰é”®è¿”å›ç®¡ç†å‘˜èœå•!");
+		pause_and_wait();
 		print_admin_menu();
 	}
 	else
 	{
-		printf("ID\t\t Ãû×Ö\t\t ×÷Õß\t\t ¼ò½é\t\t ¼Û¸ñ\t\t ¿â´æÁ¿\t\t \n");
+		printf("ID\t\t åå­—\t\t ä½œè€…\t\t ç®€ä»‹\t\t ä»·æ ¼\t\t åº“å­˜é‡\t\t \n");
 		while(b->next!=NULL)
 		{
 			b=b->next;
 			printf("%-15d %-15s %-15s %-15s %-15.2f %-15d\n",b->data.book_id,b->data.book_name,b->data.book_author,b->data.book_introduce,b->data.book_price,b->data.book_storage_count);
 		}
-		system("pause");
+		pause_and_wait();
 		print_admin_menu();
 	}
 }
@@ -563,19 +506,19 @@ void user_show_all_books(books* b)
 
 	if (b==NULL)
 	{
-		printf("Ã»ÓĞÈÎºÎÍ¼Êé ÈÎÒâ°´¼ü·µ»ØÓÃ»§²Ëµ¥!");
-		system("pause");
+		printf("æ²¡æœ‰ä»»ä½•å›¾ä¹¦ ä»»æ„æŒ‰é”®è¿”å›ç”¨æˆ·èœå•!");
+		pause_and_wait();
 		print_user_menu();
 	}
 	else
 	{
-		printf("ID\t\t Ãû×Ö\t\t ×÷Õß\t\t ¼ò½é\t\t ¼Û¸ñ\t\t ¿â´æÁ¿\t\t \n");
+		printf("ID\t\t åå­—\t\t ä½œè€…\t\t ç®€ä»‹\t\t ä»·æ ¼\t\t åº“å­˜é‡\t\t \n");
 		while(b->next!=NULL)
 		{
 			b=b->next;
 			printf("%-15d %-15s %-15s %-15s %-15.2f %-15d\n",b->data.book_id,b->data.book_name,b->data.book_author,b->data.book_introduce,b->data.book_price,b->data.book_storage_count);
 		}
-		system("pause");
+		pause_and_wait();
 		print_user_menu();
 	}
 }
@@ -588,15 +531,15 @@ void append_book()
 	int override_flag=0;
 
 	printf("******************************************\n");
-	printf("***********Ìí¼ÓĞÂÊéÏòµ¼*****************\n");
+	printf("***********æ·»åŠ æ–°ä¹¦å‘å¯¼*****************\n");
 	printf("******************************************\n");
 
-	printf("ÇëÊäÈëÕâ±¾ÊéµÄID:");
+	printf("è¯·è¾“å…¥è¿™æœ¬ä¹¦çš„ID:");
 	scanf("%d",&book_buffer[books_count].book_id);
 	
 	while(1)
 	{
-		printf("ÇëÊäÈëÊéÃû:");
+		printf("è¯·è¾“å…¥ä¹¦å:");
 		scanf("%s",book_buffer[books_count].book_name);
 
 		for (i = 0; i < books_count; ++i)
@@ -610,10 +553,10 @@ void append_book()
 
 		if (override_flag==1)
 		{
-			printf("´æÔÚÏàÍ¬ÊéÃû\n");
-			printf("ÈÎÒâ°´¼üÖØĞÂÊäÈëÊéÃû\n");
+			printf("å­˜åœ¨ç›¸åŒä¹¦å\n");
+			printf("ä»»æ„æŒ‰é”®é‡æ–°è¾“å…¥ä¹¦å\n");
 			override_flag=0;
-			system("pause");
+			pause_and_wait();
 		}
 		else
 		{
@@ -622,20 +565,20 @@ void append_book()
 
 	}
 
-	printf("ÇëÊäÈëÊéµÄ×÷ÕßÃû×Ö:");
+	printf("è¯·è¾“å…¥ä¹¦çš„ä½œè€…åå­—:");
 	scanf("%s",book_buffer[books_count].book_author);
-	printf("ÇëÊäÈëÊéµÄ¼ò½é(²»ÒªÓĞ¿Õ¸ñ):");
+	printf("è¯·è¾“å…¥ä¹¦çš„ç®€ä»‹(ä¸è¦æœ‰ç©ºæ ¼):");
 	scanf("%s",book_buffer[books_count].book_introduce);
-	printf("ÇëÊäÈëÊäµÄ¼Û¸ñ:");
+	printf("è¯·è¾“å…¥è¾“çš„ä»·æ ¼:");
 	scanf("%f",&book_buffer[books_count].book_price);
-	printf("ÇëÊäÈëÊéµÄ¿â´æ:");
+	printf("è¯·è¾“å…¥ä¹¦çš„åº“å­˜:");
 	scanf("%d",&book_buffer[books_count].book_storage_count);
 	books_count++;
-	printf("ÕıÔÚĞ´Èë´ÅÅÌ...........\n");
+	printf("æ­£åœ¨å†™å…¥ç£ç›˜...........\n");
 	write_books_file();
 	book_buffer_to_linklist();
-	printf("Ìí¼Ó³É¹¦! ÈÎÒâ°´¼ü·µ»Ø¹ÜÀíÔ±²Ëµ¥\n");
-	system("pause");
+	printf("æ·»åŠ æˆåŠŸ! ä»»æ„æŒ‰é”®è¿”å›ç®¡ç†å‘˜èœå•\n");
+	pause_and_wait();
 	print_admin_menu();
 }
 
@@ -654,7 +597,7 @@ void delete_book_by_id()
 
 	while(1)
 	{
-		printf("ÇëÊäÈëÒªÉ¾³ıµÄÊéµÄID:");
+		printf("è¯·è¾“å…¥è¦åˆ é™¤çš„ä¹¦çš„ID:");
 		scanf("%d",&id);
 
 		for (i = 0; i < books_count; ++i)
@@ -672,9 +615,9 @@ void delete_book_by_id()
 		}
 		else
 		{
-			printf("ID¶ÔÓ¦µÄÊé²»´æÔÚ ÈÎÒâ°´¼üÖØÊÔ!");
+			printf("IDå¯¹åº”çš„ä¹¦ä¸å­˜åœ¨ ä»»æ„æŒ‰é”®é‡è¯•!");
 			found_flag=0;
-			system("pause");
+			pause_and_wait();
 		}
 	}
 
@@ -692,12 +635,12 @@ void delete_book_by_id()
 			q=p->next;
 		}
 	}
-	printf("É¾³ı³É¹¦!\n");
-	printf("ÕıÔÚĞ´Èë´ÅÅÌ...............\n");
+	printf("åˆ é™¤æˆåŠŸ!\n");
+	printf("æ­£åœ¨å†™å…¥ç£ç›˜...............\n");
 	linklist_to_book_buffer(book_first_node);
 	write_books_file();
-	printf("Ğ´Èë³É¹¦ ÈÎÒâ°´¼ü·µ»Ø¹ÜÀíÔ±²Ëµ¥");
-	system("pause");
+	printf("å†™å…¥æˆåŠŸ ä»»æ„æŒ‰é”®è¿”å›ç®¡ç†å‘˜èœå•");
+	pause_and_wait();
 	print_admin_menu();
 }
 
@@ -715,12 +658,12 @@ void delete_user_by_name()
 	int found_flag;
 	
 	printf("******************************************\n");
-	printf("*************µ¥¸öÓÃ»§É¾³ı*****************\n");
+	printf("*************å•ä¸ªç”¨æˆ·åˆ é™¤*****************\n");
 	printf("******************************************\n");
 	
 	while(1)
 	{
-		printf("ÇëÊäÈëÒªÉ¾³ıµÄÓÃ»§µÄÃû×Ö:");
+		printf("è¯·è¾“å…¥è¦åˆ é™¤çš„ç”¨æˆ·çš„åå­—:");
 		scanf("%s",name);
 
 		for (i = 0; i < users_count; ++i)
@@ -739,9 +682,9 @@ void delete_user_by_name()
 		
 		else
 		{
-			printf("ÊäÈëµÄÓÃ»§²»´æÔÚ ÈÎÒâ°´¼üÖØÊÔ!");
+			printf("è¾“å…¥çš„ç”¨æˆ·ä¸å­˜åœ¨ ä»»æ„æŒ‰é”®é‡è¯•!");
 			found_flag=0;
-			system("pause");
+			pause_and_wait();
 		}
 	}
 
@@ -760,12 +703,12 @@ void delete_user_by_name()
 		}
 	}
 	
-	printf("É¾³ı³É¹¦!\n");
-	printf("ÕıÔÚĞ´Èë´ÅÅÌ...............\n");
+	printf("åˆ é™¤æˆåŠŸ!\n");
+	printf("æ­£åœ¨å†™å…¥ç£ç›˜...............\n");
 	linklist_to_user_buffer(user_first_node);
 	write_users_file();
-	printf("Ğ´Èë³É¹¦ ÈÎÒâ°´¼ü·µ»ØÏµÍ³ÉèÖÃ²Ëµ¥");
-	system("pause");
+	printf("å†™å…¥æˆåŠŸ ä»»æ„æŒ‰é”®è¿”å›ç³»ç»Ÿè®¾ç½®èœå•");
+	pause_and_wait();
 	print_system_config_menu();
 }
 
@@ -779,7 +722,7 @@ void edit_book_storage_by_id(void)
 
 	while(1)
 	{
-		printf("ÊäÈëÄãÏëĞŞ¸Ä¿â´æµÄÍ¼ÊéµÄID:");
+		printf("è¾“å…¥ä½ æƒ³ä¿®æ”¹åº“å­˜çš„å›¾ä¹¦çš„ID:");
 		scanf("%d",&id);
 
 		for (i = 0; i < books_count; ++i)
@@ -797,22 +740,22 @@ void edit_book_storage_by_id(void)
 		}
 		else
 		{
-			printf("ID¶ÔÓ¦µÄÊé²»´æÔÚ!");
+			printf("IDå¯¹åº”çš„ä¹¦ä¸å­˜åœ¨!");
 			found_flag=0;
-			printf("ÈÎÒâ°´¼üÖØĞÂÊäÈë");
-			system("pause");
+			printf("ä»»æ„æŒ‰é”®é‡æ–°è¾“å…¥");
+			pause_and_wait();
 		}
 
 	}
 
-	printf("ÊäÈëÕâ±¾Êéµ±Ç°µÄ¿â´æÁ¿:");
+	printf("è¾“å…¥è¿™æœ¬ä¹¦å½“å‰çš„åº“å­˜é‡:");
 	scanf("%d",&count);
 	book_buffer[i].book_storage_count=count;
 	book_buffer_to_linklist(book_first_node);
-	printf("Ğ´Èë´ÅÅÌ...........");
+	printf("å†™å…¥ç£ç›˜...........");
 	write_books_file();
-	printf("Íê³É! ÈÎÒâ°´¼ü·µ»Ø¹ÜÀíÔ±²Ëµ¥\n");
-	system("pause");
+	printf("å®Œæˆ! ä»»æ„æŒ‰é”®è¿”å›ç®¡ç†å‘˜èœå•\n");
+	pause_and_wait();
 	print_admin_menu();
 }
 
@@ -826,7 +769,7 @@ void edit_book_info_by_id(void)
 
 	while(1)
 	{
-		printf("ÊäÈëÄãÏëĞŞ¸ÄĞÅÏ¢µÄÍ¼ÊéµÄID:");
+		printf("è¾“å…¥ä½ æƒ³ä¿®æ”¹ä¿¡æ¯çš„å›¾ä¹¦çš„ID:");
 		scanf("%d",&id);
 
 		for (i = 0; i < books_count; ++i)
@@ -844,32 +787,32 @@ void edit_book_info_by_id(void)
 		}
 		else
 		{
-			printf("ID¶ÔÓ¦µÄÊé²»´æÔÚ! ÈÎÒâ°´¼üÖØÊÔ! ");
+			printf("IDå¯¹åº”çš„ä¹¦ä¸å­˜åœ¨! ä»»æ„æŒ‰é”®é‡è¯•! ");
 			found_flag=0;
-			system("pause");
+			pause_and_wait();
 		}
 
 	}
 
-	printf("ÊäÈëÕâ±¾ÊéµÄĞÂID:");
+	printf("è¾“å…¥è¿™æœ¬ä¹¦çš„æ–°ID:");
 	scanf("%d",&book_buffer[i].book_id);
-	printf("ÊäÈëÕâ±¾ÊéµÄĞÂÃû×Ö:");
+	printf("è¾“å…¥è¿™æœ¬ä¹¦çš„æ–°åå­—:");
 	scanf("%s",book_buffer[i].book_name);
-	printf("ÇëÊäÈëÊéµÄ×÷ÕßÃû×Ö:");
+	printf("è¯·è¾“å…¥ä¹¦çš„ä½œè€…åå­—:");
 	scanf("%s",book_buffer[i].book_author);
-	printf("ÇëÊäÈëÊéµÄ¼ò½é:");
+	printf("è¯·è¾“å…¥ä¹¦çš„ç®€ä»‹:");
 	scanf("%s",book_buffer[i].book_introduce);
-	printf("ÇëÊäÈëÊéµÄ¼Û¸ñ:");
+	printf("è¯·è¾“å…¥ä¹¦çš„ä»·æ ¼:");
 	scanf("%f",&book_buffer[i].book_price);
-	printf("ÇëÊäÈëÊéµÄ¿â´æÁ¿:");
+	printf("è¯·è¾“å…¥ä¹¦çš„åº“å­˜é‡:");
 	scanf("%d",&book_buffer[i].book_storage_count);
 
 	book_buffer_to_linklist(book_first_node);
 	write_books_file();
-	printf("Ğ´Èë´ÅÅÌ...........");
+	printf("å†™å…¥ç£ç›˜...........");
 	write_books_file();
-	printf("Íê³É! ÈÎÒâ°´¼ü·µ»Ø¹ÜÀíÔ±²Ëµ¥\n");
-	system("pause");
+	printf("å®Œæˆ! ä»»æ„æŒ‰é”®è¿”å›ç®¡ç†å‘˜èœå•\n");
+	pause_and_wait();
 	print_admin_menu();
 }
 
@@ -883,7 +826,7 @@ void admin_lookup_introduce_by_id(void)
 
 	while(1)
 	{
-		printf("ÊäÈë²éÑ¯¼ò½éµÄÍ¼ÊéµÄID:");
+		printf("è¾“å…¥æŸ¥è¯¢ç®€ä»‹çš„å›¾ä¹¦çš„ID:");
 		scanf("%d",&id);
 
 		for (i = 0; i < books_count; ++i)
@@ -901,14 +844,14 @@ void admin_lookup_introduce_by_id(void)
 		}
 		else
 		{
-			printf("ID¶ÔÓ¦µÄÊé²»´æÔÚ! ÈÎÒâ°´¼üÖØÊÔ! ");
+			printf("IDå¯¹åº”çš„ä¹¦ä¸å­˜åœ¨! ä»»æ„æŒ‰é”®é‡è¯•! ");
 			found_flag=0;
-			system("pause");
+			pause_and_wait();
 		}
 	}
-	printf("##################Í¼Êé¼ò½é#####################\n");
+	printf("##################å›¾ä¹¦ç®€ä»‹#####################\n");
 	printf("%s\n",book_buffer[i].book_introduce);
-	system("pause");
+	pause_and_wait();
 	admin_book_info_look_up();
 }
 
@@ -932,13 +875,13 @@ void sub_sort_books_by_price()
 		}
 	}
 
-	printf("ID\t\t Ãû×Ö\t\t ×÷Õß\t\t ¼ò½é\t\t ¼Û¸ñ\t\t ¿â´æÁ¿\t\t \n");
+	printf("ID\t\t åå­—\t\t ä½œè€…\t\t ç®€ä»‹\t\t ä»·æ ¼\t\t åº“å­˜é‡\t\t \n");
 	
 	for(i=0;i<books_count;i++)
 	{
 		printf("%-15d %-15s %-15s %-15s %-15.2f %-15d\n",book_buffer[i].book_id,book_buffer[i].book_name,book_buffer[i].book_author,book_buffer[i].book_introduce,book_buffer[i].book_price,book_buffer[i].book_storage_count);
 	}
-	system("pause");
+	pause_and_wait();
 	admin_book_info_look_up();
 }
 
@@ -948,7 +891,7 @@ void get_price_sum()
 	int i;
 	float sum=0;
 	
-	printf("ID\t\t Ãû×Ö\t\t ×÷Õß\t\t ¼ò½é\t\t ¼Û¸ñ\t\t ¿â´æÁ¿\t\t \n");
+	printf("ID\t\t åå­—\t\t ä½œè€…\t\t ç®€ä»‹\t\t ä»·æ ¼\t\t åº“å­˜é‡\t\t \n");
 
 	for(i=0;i<books_count;i++)
 	{
@@ -960,18 +903,18 @@ void get_price_sum()
 		sum=sum+(book_buffer[i].book_price*book_buffer[i].book_storage_count);
 	}
 
-	printf("µ±Ç°Í¼Êé×Ü¼ÛÎª:%.2f\n",sum);
-	system("pause");
+	printf("å½“å‰å›¾ä¹¦æ€»ä»·ä¸º:%.2f\n",sum);
+	pause_and_wait();
 	admin_book_info_look_up();
 }
 
 
 void admin_login(void)
 {
-	printf("\t\t\t³¢ÊÔ´ÓÓ²ÅÌ¶ÁÈ¡¹ÜÀíÔ±ÅäÖÃ,ÇëÉÔºó......\n");
+	printf("\t\t\tå°è¯•ä»ç¡¬ç›˜è¯»å–ç®¡ç†å‘˜é…ç½®,è¯·ç¨å......\n");
 	printf("\t\t\t");
 	read_admins_file();
-	system("pause");
+	pause_and_wait();
 	fflush(stdin);
 	
 	char name[20];
@@ -983,14 +926,14 @@ void admin_login(void)
 	int password_error_time=0;
 
 
-	system("cls");
+	clear_screen();
 	printf("#######################################################\n");
-	printf("»¶Ó­À´µ½¹ÜÀíÔ±µÇÂ¼Ïòµ¼\n\n");
+	printf("æ¬¢è¿æ¥åˆ°ç®¡ç†å‘˜ç™»å½•å‘å¯¼\n\n");
 	printf("#######################################################\n");
 
 	while(1)
 	{
-		printf("ÊäÈë¹ÜÀíÔ±Ãû×Ö:");
+		printf("è¾“å…¥ç®¡ç†å‘˜åå­—:");
 		scanf("%s",name);
 
 		for(j=0;j<admins_count;j++)
@@ -1004,15 +947,15 @@ void admin_login(void)
 
 		if (found_flag==0)
 		{
-			printf("´íÎó ¸Ã¹ÜÀíÔ±²»´æÔÚ\n");
-			printf("ÈÎÒâ°´¼üÖØÊÔ!\n");
-			system("pause");
+			printf("é”™è¯¯ è¯¥ç®¡ç†å‘˜ä¸å­˜åœ¨\n");
+			printf("ä»»æ„æŒ‰é”®é‡è¯•!\n");
+			pause_and_wait();
 			
 			name_error_time++;
 			if (name_error_time>=3)
 			{
-				printf("ÑÏÖØ´íÎó!!! ÄãÒÑ¾­ %d ´ÎÊä´íÕË»§Ãû\n",name_error_time);
-				printf("¾Ü¾øµÇÂ¼!\n");
+				printf("ä¸¥é‡é”™è¯¯!!! ä½ å·²ç» %d æ¬¡è¾“é”™è´¦æˆ·å\n",name_error_time);
+				printf("æ‹’ç»ç™»å½•!\n");
 				exit(0);
 			}
 		}
@@ -1024,9 +967,9 @@ void admin_login(void)
 
 	while(1)
 	{
-		printf("ÇëÊäÈëÄãµÄÃÜÂë(ÏÔÊ¾ÎªĞÇºÅ):");
+		printf("è¯·è¾“å…¥ä½ çš„å¯†ç (æ˜¾ç¤ºä¸ºæ˜Ÿå·):");
 		input_secret(password);
-		printf("ÇëÈ·ÈÏÃÜÂë:");
+		printf("è¯·ç¡®è®¤å¯†ç :");
 		input_secret(password_confirm);
 
 		if (strcmp(password,password_confirm)==0)
@@ -1036,21 +979,21 @@ void admin_login(void)
 			{
 				if(strcmp(password_confirm,admin_buffer[j].admin_password)==0)
 				{
-					printf("µÇÂ½³É¹¦, ÈÎÒâ°´¼ü¼ÌĞø\n");
-					system("pause");
+					printf("ç™»é™†æˆåŠŸ, ä»»æ„æŒ‰é”®ç»§ç»­\n");
+					pause_and_wait();
 					print_admin_menu();
 					break;
 				}
 				else
 				{
 					password_error_time++;
-					printf("ÕË»§ %s ¶ÔÓ¦µÄÃÜÂë²»ÕıÈ·\n",admin_buffer[j].admin_name);
-					printf("ÇëÈÎÒâ°´¼üÖØĞÂÊäÈë\n");
-					system("pause");
+					printf("è´¦æˆ· %s å¯¹åº”çš„å¯†ç ä¸æ­£ç¡®\n",admin_buffer[j].admin_name);
+					printf("è¯·ä»»æ„æŒ‰é”®é‡æ–°è¾“å…¥\n");
+					pause_and_wait();
 					if (password_error_time>=3)
 					{
-						printf("ÑÏÖØ´íÎó!!! ÄãÒÑ¾­ %d ´ÎÊä´íÃÜÂë!\n",password_error_time);
-						printf("¾Ü¾øµÇÂ¼!\n");
+						printf("ä¸¥é‡é”™è¯¯!!! ä½ å·²ç» %d æ¬¡è¾“é”™å¯†ç !\n",password_error_time);
+						printf("æ‹’ç»ç™»å½•!\n");
 						exit(0);
 					}
 					break;
@@ -1060,8 +1003,8 @@ void admin_login(void)
 		}
 		else
 		{
-			printf("Á½´ÎÊäÈëµÄÃÜÂë²»Í¬! ÈÎÒâ°´¼üÖØÊÔ\n");
-			system("pause");
+			printf("ä¸¤æ¬¡è¾“å…¥çš„å¯†ç ä¸åŒ! ä»»æ„æŒ‰é”®é‡è¯•\n");
+			pause_and_wait();
 		}
 	}
 }
@@ -1069,10 +1012,10 @@ void admin_login(void)
 
 void user_login(void)
 {
-	printf("ÕıÔÚ´Ó´ÅÅÌ¶ÁÈ¡ÓÃ»§ÅäÖÃÎÄ¼ş, ÇëÉÔºó.........!\n");
+	printf("æ­£åœ¨ä»ç£ç›˜è¯»å–ç”¨æˆ·é…ç½®æ–‡ä»¶, è¯·ç¨å.........!\n");
 	read_users_file();
-	printf("¶ÁÈ¡ÓÃ»§ÎÄ¼ş³É¹¦ ÈÎÒâ°´¼ü¼ÌĞø\n"); 
-	system("pause");
+	printf("è¯»å–ç”¨æˆ·æ–‡ä»¶æˆåŠŸ ä»»æ„æŒ‰é”®ç»§ç»­\n"); 
+	pause_and_wait();
 	fflush(stdin);
 	char name[20];
 	char password[20];
@@ -1084,14 +1027,14 @@ void user_login(void)
 	bought_times_count=0;
 
 
-	system("cls");
+	clear_screen();
 	printf("#######################################################\n");
-	printf("»¶Ó­À´µ½ÓÃ»§µÇÂ¼Ïòµ¼\n");
+	printf("æ¬¢è¿æ¥åˆ°ç”¨æˆ·ç™»å½•å‘å¯¼\n");
 	printf("#######################################################\n");
 
 	while(1)
 	{
-		printf("ÇëÊäÈëÄãµÄÓÃ»§Ãû:");
+		printf("è¯·è¾“å…¥ä½ çš„ç”¨æˆ·å:");
 		scanf("%s",name);
 
 		for(j=0;j<users_count;j++)
@@ -1105,14 +1048,14 @@ void user_login(void)
 
 		if (found_flag==0)
 		{
-			printf("´íÎó! ÄãÊäÈëµÄÓÃ»§Ãû²»´æÔÚ\n");
-			printf("ÈÎÒâ°´¼ü¼ÌĞø!\n");
-			system("pause");
+			printf("é”™è¯¯! ä½ è¾“å…¥çš„ç”¨æˆ·åä¸å­˜åœ¨\n");
+			printf("ä»»æ„æŒ‰é”®ç»§ç»­!\n");
+			pause_and_wait();
 			name_error_time++;
 			if (name_error_time>=3)
 			{
-				printf("ÑÏÖØ´íÎó!!! ÄãÒÑ¾­ %d ´ÎÊä´íÕË»§Ãû\n",name_error_time);
-				printf("¾Ü¾øµÇÂ¼!\n");
+				printf("ä¸¥é‡é”™è¯¯!!! ä½ å·²ç» %d æ¬¡è¾“é”™è´¦æˆ·å\n",name_error_time);
+				printf("æ‹’ç»ç™»å½•!\n");
 				exit(0);
 			}
 		}
@@ -1124,9 +1067,9 @@ void user_login(void)
 
 	while(1)
 	{
-		printf("ÇëÊäÈëÃÜÂë(ÏÔÊ¾ÎªĞÇºÅ):");
+		printf("è¯·è¾“å…¥å¯†ç (æ˜¾ç¤ºä¸ºæ˜Ÿå·):");
 		input_secret(password);
-		printf("ÇëÈ·ÈÏÃÜÂë:");
+		printf("è¯·ç¡®è®¤å¯†ç :");
 		input_secret(password_confirm);
 
 		if (strcmp(password,password_confirm)==0)
@@ -1136,7 +1079,7 @@ void user_login(void)
 			{
 				if(strcmp(password_confirm,user_buffer[j].user_password)==0)
 				{
-					printf("µÇÂ¼³É¹¦ÈÎÒâ°´¼ü¼ÌĞø\n");
+					printf("ç™»å½•æˆåŠŸä»»æ„æŒ‰é”®ç»§ç»­\n");
 					current_logined_user_in_buffer=j;
 					is_user_logined=1;
 					fflush(stdin);
@@ -1147,12 +1090,12 @@ void user_login(void)
 				else
 				{
 					password_error_time++;
-					printf("ÕËºÅ %s ¶ÔÓ¦µÄÃÜÂë´íÎó\n",user_buffer[j].user_name);
-					printf("ÇëÖØÊÔ\n");
+					printf("è´¦å· %s å¯¹åº”çš„å¯†ç é”™è¯¯\n",user_buffer[j].user_name);
+					printf("è¯·é‡è¯•\n");
 					if (password_error_time>=3)
 					{
-						printf("ÑÏÖØ´íÎó ÄãÒÑ¾­Êä´íÃÜÂë %d ´Î!\n",password_error_time);
-						printf("¾Ü¾ø·ÃÎÊ!\n");
+						printf("ä¸¥é‡é”™è¯¯ ä½ å·²ç»è¾“é”™å¯†ç  %d æ¬¡!\n",password_error_time);
+						printf("æ‹’ç»è®¿é—®!\n");
 						exit(0);
 					}
 					break; 
@@ -1161,7 +1104,7 @@ void user_login(void)
 		}
 		else
 		{
-			printf("ÊäÈë´íÎó! ÈÎÒâ°´¼üÖØĞÂÊäÈë!!\n");
+			printf("è¾“å…¥é”™è¯¯! ä»»æ„æŒ‰é”®é‡æ–°è¾“å…¥!!\n");
 		}
 	}
 }
@@ -1173,19 +1116,19 @@ void getVIP()
 	char password[20];
 	char password_confirm[20];
 
-	system("cls");
+	clear_screen();
 	printf("#######################################################\n");
-	printf("»¶Ó­ÉêÇëÍ¼Êé¹İVIP\n");
+	printf("æ¬¢è¿ç”³è¯·å›¾ä¹¦é¦†VIP\n");
 	printf("#######################################################\n");
-	printf("ÎªÁË°²È«,ÎÒÃÇĞèÒªÖØĞÂÈ·ÈÏÄãµÄÉí·İ\n");
+	printf("ä¸ºäº†å®‰å…¨,æˆ‘ä»¬éœ€è¦é‡æ–°ç¡®è®¤ä½ çš„èº«ä»½\n");
 
 
 
 	while(1)
 	{
-		printf("ÇëÊäÈëÃÜÂë(½«ÏÔÊ¾ÎªĞÇ):");
+		printf("è¯·è¾“å…¥å¯†ç (å°†æ˜¾ç¤ºä¸ºæ˜Ÿ):");
 		input_secret(password);
-		printf("ÇëÈ·ÈÏÃÜÂë:");
+		printf("è¯·ç¡®è®¤å¯†ç :");
 		input_secret(password_confirm);
 
 		if (strcmp(password,password_confirm)==0)
@@ -1197,15 +1140,15 @@ void getVIP()
 				{
 					user_buffer[current_logined_user_in_buffer].isVIP=1;
 					write_users_file();
-					printf("³É¹¦ÉêÇëVIP\n");
-					system("pause");
+					printf("æˆåŠŸç”³è¯·VIP\n");
+					pause_and_wait();
 					print_user_menu();
 					break;
 				}
 				else
 				{
-					printf("ÕË»§Ãû%s ¶ÔÓ¦µÄÃÜÂë´íÎó\n",user_buffer[current_logined_user_in_buffer].user_name);
-					printf("ÉêÇëVIPÊ§°Ü\n");
+					printf("è´¦æˆ·å%s å¯¹åº”çš„å¯†ç é”™è¯¯\n",user_buffer[current_logined_user_in_buffer].user_name);
+					printf("ç”³è¯·VIPå¤±è´¥\n");
 					print_user_menu();
 					break;
 				}
@@ -1214,7 +1157,7 @@ void getVIP()
 		}
 		else
 		{
-			printf("ÊäÈë´íÎó! ÈÎÒâ°´¼üÖØĞÂÊäÈë!\n");
+			printf("è¾“å…¥é”™è¯¯! ä»»æ„æŒ‰é”®é‡æ–°è¾“å…¥!\n");
 		}
 	}
 }
@@ -1225,18 +1168,18 @@ void charge_for_balance(void)
 	char password_confirm[20];
 	float charge;
 
-	system("cls");
+	clear_screen();
 	printf("#######################################################\n");
-	printf("»¶Ó­½øĞĞÍ¼Êé¹İÓÃ»§ÕË»§³äÖµ\n");
+	printf("æ¬¢è¿è¿›è¡Œå›¾ä¹¦é¦†ç”¨æˆ·è´¦æˆ·å……å€¼\n");
 	printf("#######################################################\n");
-	printf("ÎªÁË°²È«,ÎÒÃÇĞèÒªÖØĞÂÈ·ÈÏÄãµÄÉí·İ\n");
+	printf("ä¸ºäº†å®‰å…¨,æˆ‘ä»¬éœ€è¦é‡æ–°ç¡®è®¤ä½ çš„èº«ä»½\n");
 
 
 	while(1)
 	{
-		printf("ÇëÊäÈëÃÜÂë(½«ÏÔÊ¾ÎªĞÇ):");
+		printf("è¯·è¾“å…¥å¯†ç (å°†æ˜¾ç¤ºä¸ºæ˜Ÿ):");
 		input_secret(password);
-		printf("ÇëÈ·ÈÏÃÜÂë:");
+		printf("è¯·ç¡®è®¤å¯†ç :");
 		input_secret(password_confirm);
 
 		if (strcmp(password,password_confirm)==0)
@@ -1248,11 +1191,11 @@ void charge_for_balance(void)
 				{
 					while(1)
 					{	
-						printf("ÇëÊäÈëÄãÏëÒª³äÖµµÄ½ğ¶î:");
+						printf("è¯·è¾“å…¥ä½ æƒ³è¦å……å€¼çš„é‡‘é¢:");
 						scanf("%f",&charge);
 						if(charge<0)
 						{
-							printf("½ğ¶î²»ÄÜĞ¡ÓÚ0 ÇëÖØĞÂÊäÈë\n");
+							printf("é‡‘é¢ä¸èƒ½å°äº0 è¯·é‡æ–°è¾“å…¥\n");
 						}
 						else
 						{
@@ -1261,15 +1204,15 @@ void charge_for_balance(void)
 						}
 					}	
 					write_users_file();
-					printf("³äÖµ³É¹¦ ÈÎÒâ°´¼ü·µ»ØÓÃ»§²Ëµ¥\n");
-					system("pause");
+					printf("å……å€¼æˆåŠŸ ä»»æ„æŒ‰é”®è¿”å›ç”¨æˆ·èœå•\n");
+					pause_and_wait();
 					print_user_menu();
 					break;
 				}
 				else
 				{
-					printf("ÕË»§Ãû%s ¶ÔÓ¦µÄÃÜÂë´íÎó\n",user_buffer[current_logined_user_in_buffer].user_name);
-					printf("ÉêÇëVIPÊ§°Ü\n");
+					printf("è´¦æˆ·å%s å¯¹åº”çš„å¯†ç é”™è¯¯\n",user_buffer[current_logined_user_in_buffer].user_name);
+					printf("ç”³è¯·VIPå¤±è´¥\n");
 					print_user_menu();
 					break;
 				}
@@ -1278,7 +1221,7 @@ void charge_for_balance(void)
 		}
 		else
 		{
-			printf("ÊäÈë´íÎó! ÈÎÒâ°´¼üÖØĞÂÊäÈë!\n");
+			printf("è¾“å…¥é”™è¯¯! ä»»æ„æŒ‰é”®é‡æ–°è¾“å…¥!\n");
 		}
 	}
 }
@@ -1293,12 +1236,12 @@ void buy_book_via_id(void)
 	int count;
 
 	printf("******************************************\n");
-	printf("*****************¹ºÂòÍ¼Êé*****************\n");
+	printf("*****************è´­ä¹°å›¾ä¹¦*****************\n");
 	printf("******************************************\n");
 	
 	while(1)
 	{
-		printf("ÇëÊäÈëÄãÏë¹ºÂòµÄÊéµÄID:");
+		printf("è¯·è¾“å…¥ä½ æƒ³è´­ä¹°çš„ä¹¦çš„ID:");
 		scanf("%d",&id);
 
 		for (i = 0; i < books_count; ++i)
@@ -1312,10 +1255,10 @@ void buy_book_via_id(void)
 
 		if (found_flag==0)
 		{
-			printf("²»´æÔÚID¶ÔÓ¦µÄÊé\n");
-			printf("ÈÎÒâ°´¼üÖØĞÂÊäÈëID\n");
+			printf("ä¸å­˜åœ¨IDå¯¹åº”çš„ä¹¦\n");
+			printf("ä»»æ„æŒ‰é”®é‡æ–°è¾“å…¥ID\n");
 			found_flag=0;
-			system("pause");
+			pause_and_wait();
 		}
 		
 		else
@@ -1327,21 +1270,21 @@ void buy_book_via_id(void)
 	
 	while(1)
 	{	
-		printf("ÇëÊäÈëÄãÏë¹ºÂòµÄÊıÁ¿:");
+		printf("è¯·è¾“å…¥ä½ æƒ³è´­ä¹°çš„æ•°é‡:");
 		scanf("%d",&count);
 		
 		if(book_buffer[i].book_storage_count < count)
 		{
-			printf("¶Ô²»Æğ! ¸ÃÊéÃ»ÓĞÄãÏëÂòµÄÊıÁ¿ÄÇÃ´¶à! È¥¿´¿´±ğµÄ\n");
-			system("pause");
+			printf("å¯¹ä¸èµ·! è¯¥ä¹¦æ²¡æœ‰ä½ æƒ³ä¹°çš„æ•°é‡é‚£ä¹ˆå¤š! å»çœ‹çœ‹åˆ«çš„\n");
+			pause_and_wait();
 			print_user_menu();
 			break;
 		}
 		else if(book_buffer[i].book_price*count > user_buffer[current_logined_user_in_buffer].balance)
 		{
-			printf("²»ºÃÒâË¼ ÄãµÄÓà¶îÒÑ¾­²»¹»ÄãÂòÏëÂòµÄÊéÁË È¥¿´¿´±ğµÄ°É\n");
-			printf("Äã¿ÉÒÔÈ¥ÓÃ»§²Ëµ¥³äÖµ!\n");
-			system("pause");
+			printf("ä¸å¥½æ„æ€ ä½ çš„ä½™é¢å·²ç»ä¸å¤Ÿä½ ä¹°æƒ³ä¹°çš„ä¹¦äº† å»çœ‹çœ‹åˆ«çš„å§\n");
+			printf("ä½ å¯ä»¥å»ç”¨æˆ·èœå•å……å€¼!\n");
+			pause_and_wait();
 			print_user_menu();
 			break;
 		}
@@ -1350,13 +1293,13 @@ void buy_book_via_id(void)
 			book_buffer[i].book_storage_count=book_buffer[i].book_storage_count-count;
 			if(user_buffer[current_logined_user_in_buffer].isVIP==1)
 			{
-				printf("ÄãÊÇVIP ÄãÓµÓĞ9ÕÛÓÅ»İ!\n");
+				printf("ä½ æ˜¯VIP ä½ æ‹¥æœ‰9æŠ˜ä¼˜æƒ !\n");
 				user_buffer[current_logined_user_in_buffer].balance=user_buffer[current_logined_user_in_buffer].balance-book_buffer[i].book_price*count*0.9;
 			}
 			else
 			{
-				printf("Äã²»ÊÇVIP ÄãÃ»ÓĞ9ÕÛÓÅ»İ!\n");
-				printf("Äã¿ÉÒÔ°ìÀíVIP»áÔ±!\n");
+				printf("ä½ ä¸æ˜¯VIP ä½ æ²¡æœ‰9æŠ˜ä¼˜æƒ !\n");
+				printf("ä½ å¯ä»¥åŠç†VIPä¼šå‘˜!\n");
 				user_buffer[current_logined_user_in_buffer].balance=user_buffer[current_logined_user_in_buffer].balance-book_buffer[i].book_price*count;
 			}
 			shop_list[bought_times_count].book_id=id;
@@ -1364,37 +1307,37 @@ void buy_book_via_id(void)
 			strcpy(shop_list[bought_times_count].book_author,book_buffer[i].book_author);
 			shop_list[bought_times_count].book_price=book_buffer[i].book_price;
 			bought_times_count++;
-			printf("¹ºÂò³É¹¦!");
+			printf("è´­ä¹°æˆåŠŸ!");
 			break;
 		}
 	}
 	
-	printf("ÕıÔÚĞ´Èë´ÅÅÌ...........\n");
+	printf("æ­£åœ¨å†™å…¥ç£ç›˜...........\n");
 	write_books_file();
 	write_users_file();
-	printf("ÒÑ¾­³É¹¦¹ºÂò! ÈÎÒâ°´¼ü·µ»Ø¹ÜÀíÔ±²Ëµ¥\n");
-	system("pause");
+	printf("å·²ç»æˆåŠŸè´­ä¹°! ä»»æ„æŒ‰é”®è¿”å›ç®¡ç†å‘˜èœå•\n");
+	pause_and_wait();
 	print_user_menu();
 }
 
 void show_shop_list(void)
 {
 	printf("******************************************\n");
-	printf("***************¹ºÂòÇåµ¥*******************\n");
+	printf("***************è´­ä¹°æ¸…å•*******************\n");
 	printf("******************************************\n");
 	printf("\n");
 	
 	int i;
 	float total;
 	
-	printf("ID\t\t ×÷Õß\t\t µ¥¼Û\t\t ¹ºÂòÊıÁ¿\t\t ºÏ¼Æ\t\n");
+	printf("ID\t\t ä½œè€…\t\t å•ä»·\t\t è´­ä¹°æ•°é‡\t\t åˆè®¡\t\n");
 	
 	for(i=0;i<bought_times_count;i++)
 	{
 	printf("%-15d %-15s %-15.2f %-15d %-15.2f\n",shop_list[i].book_id,shop_list[i].book_author,shop_list[i].book_price,shop_list[i].buy_count,shop_list[i].book_price*shop_list[i].buy_count);
 	}
 	
-	system("pause");
+	pause_and_wait();
 	
 	print_user_menu();
 	
@@ -1402,10 +1345,10 @@ void show_shop_list(void)
 
 void admin_show_book_info()
 {
-	system("cls");
+	clear_screen();
 
 	printf("\t\t\t******************************************\n");
-	printf("\t\t\t*************Í¼ÊéĞÅÏ¢ÏÔÊ¾*****************\n");
+	printf("\t\t\t*************å›¾ä¹¦ä¿¡æ¯æ˜¾ç¤º*****************\n");
 	printf("\t\t\t******************************************\n");
 	printf("\n");
 	
@@ -1416,18 +1359,18 @@ void admin_book_operate()
 {
 	int choice;
 
-	system("cls");
+	clear_screen();
 	printf("\t\t\t******************************************\n");
-	printf("\t\t\t**********¹ÜÀíÔ±Í¼Êé²Ù×÷Ô±²Ëµ¥************\n");
+	printf("\t\t\t**********ç®¡ç†å‘˜å›¾ä¹¦æ“ä½œå‘˜èœå•************\n");
 	printf("\t\t\t******************************************\n");
-	printf("\t\t\t\t1.Í¼ÊéÈë¿â\n");
-	printf("\t\t\t\t2.Í¼Êé³ö¿â(°´ID)\n");
-	printf("\t\t\t\t3.ĞŞ¸Ä¶ÔÓ¦IDÍ¼Êé¿â´æ\n");
-	printf("\t\t\t\t4.ĞŞ¸Ä¶ÔÓ¦IDÍ¼ÊéĞÅÏ¢\n");
-	printf("\t\t\t\t5.·µ»Ø¹ÜÀíÔ±²Ëµ¥\n");
+	printf("\t\t\t\t1.å›¾ä¹¦å…¥åº“\n");
+	printf("\t\t\t\t2.å›¾ä¹¦å‡ºåº“(æŒ‰ID)\n");
+	printf("\t\t\t\t3.ä¿®æ”¹å¯¹åº”IDå›¾ä¹¦åº“å­˜\n");
+	printf("\t\t\t\t4.ä¿®æ”¹å¯¹åº”IDå›¾ä¹¦ä¿¡æ¯\n");
+	printf("\t\t\t\t5.è¿”å›ç®¡ç†å‘˜èœå•\n");
 	printf("\t\t\t******************************************\n");
 	printf("\t\t\t******************************************\n");
-	printf("\t\t\tÇëÊäÈëÄãµÄÑ¡Ôñ:");
+	printf("\t\t\tè¯·è¾“å…¥ä½ çš„é€‰æ‹©:");
 	fflush(stdin);
 	scanf("%d",&choice);
 	
@@ -1454,7 +1397,7 @@ void admin_book_operate()
 	}
 	else
 	{
-		printf("ÊäÈë´íÎó! ÈÎÒâ°´¼üÖØĞÂÊäÈë!!!");
+		printf("è¾“å…¥é”™è¯¯! ä»»æ„æŒ‰é”®é‡æ–°è¾“å…¥!!!");
 		fflush(stdin);
 		system("admin");
 		admin_book_operate();
@@ -1465,18 +1408,18 @@ void admin_book_info_look_up()
 {
 	int choice;
 
-	system("cls");
+	clear_screen();
 
 	printf("\t\t\t******************************************\n");
-	printf("\t\t\t**********¹ÜÀíÔ±²éÑ¯Ô±²Ëµ¥****************\n");
+	printf("\t\t\t**********ç®¡ç†å‘˜æŸ¥è¯¢å‘˜èœå•****************\n");
 	printf("\t\t\t******************************************\n");
-	printf("\t\t\t\t1.°´ÕÕÍ¼Êéµ¥¼ÛÅÅĞòÏÔÊ¾\n");
-	printf("\t\t\t\t2.¼ÆËãËùÓĞÍ¼Êé×Ü¼Û\n");
-	printf("\t\t\t\t3.°´ÕÕID²éÕÒÍ¼Êé¼ò½é\n");
-	printf("\t\t\t\t4.·µ»Ø¹ÜÀíÔ±²Ëµ¥\n");
+	printf("\t\t\t\t1.æŒ‰ç…§å›¾ä¹¦å•ä»·æ’åºæ˜¾ç¤º\n");
+	printf("\t\t\t\t2.è®¡ç®—æ‰€æœ‰å›¾ä¹¦æ€»ä»·\n");
+	printf("\t\t\t\t3.æŒ‰ç…§IDæŸ¥æ‰¾å›¾ä¹¦ç®€ä»‹\n");
+	printf("\t\t\t\t4.è¿”å›ç®¡ç†å‘˜èœå•\n");
 	printf("\t\t\t******************************************\n");
 	printf("\t\t\t******************************************\n");
-	printf("\t\t\tÇëÊäÈëÄãµÄÑ¡Ôñ:");
+	printf("\t\t\tè¯·è¾“å…¥ä½ çš„é€‰æ‹©:");
 	fflush(stdin);
 	scanf("%d",&choice);
 
@@ -1498,7 +1441,7 @@ void admin_book_info_look_up()
 	}
 	else
 	{
-		printf("ÊäÈë´íÎó! ÈÎÒâ°´¼üÖØĞÂÊäÈë!!!");
+		printf("è¾“å…¥é”™è¯¯! ä»»æ„æŒ‰é”®é‡æ–°è¾“å…¥!!!");
 		fflush(stdin);
 		getchar();
 		admin_book_info_look_up();
@@ -1511,18 +1454,18 @@ void print_admin_menu(void)
 	book_buffer_to_linklist();
 	int choice;
 
-	system("cls");
+	clear_screen();
 
 	printf("\t\t\t******************************************\n");
-	printf("\t\t\t**********Í¼Êé¹İ¹ÜÀíÔ±²Ëµ¥****************\n");
+	printf("\t\t\t**********å›¾ä¹¦é¦†ç®¡ç†å‘˜èœå•****************\n");
 	printf("\t\t\t******************************************\n");
-	printf("\t\t\t\t1.ÏÔÊ¾Êé¼®ĞÅÏ¢\n");
-	printf("\t\t\t\t2.Í¼Êé²Ù×÷\n");
-	printf("\t\t\t\t3.Í¼Êé²éÑ¯\n");
-	printf("\t\t\t\t4.·µ»ØÏµÍ³µÇÂ¼\n");
+	printf("\t\t\t\t1.æ˜¾ç¤ºä¹¦ç±ä¿¡æ¯\n");
+	printf("\t\t\t\t2.å›¾ä¹¦æ“ä½œ\n");
+	printf("\t\t\t\t3.å›¾ä¹¦æŸ¥è¯¢\n");
+	printf("\t\t\t\t4.è¿”å›ç³»ç»Ÿç™»å½•\n");
 	printf("\t\t\t******************************************\n");
 	printf("\t\t\t******************************************\n");
-	printf("\t\t\tÇëÊäÈëÄãµÄÑ¡Ôñ:");
+	printf("\t\t\tè¯·è¾“å…¥ä½ çš„é€‰æ‹©:");
 	fflush(stdin);
 	scanf("%d",&choice);
 
@@ -1544,7 +1487,7 @@ void print_admin_menu(void)
 	}
 	else
 	{
-		printf("ÊäÈë´íÎó! ÈÎÒâ°´¼üÖØĞÂÊäÈë!!!");
+		printf("è¾“å…¥é”™è¯¯! ä»»æ„æŒ‰é”®é‡æ–°è¾“å…¥!!!");
 		fflush(stdin);
 		getchar();
 		print_admin_menu();
@@ -1558,22 +1501,22 @@ void print_user_menu()
 	book_buffer_to_linklist();
 	int choice;
 
-	system("cls");
+	clear_screen();
 
 	printf("\t\t\t******************************************\n");
-	printf("\t\t\t************Í¼Êé¹İÓÃ»§²Ëµ¥****************\n");
+	printf("\t\t\t************å›¾ä¹¦é¦†ç”¨æˆ·èœå•****************\n");
 	printf("\t\t\t******************************************\n");
-	printf("\t\t\t\t1.ÏÔÊ¾ËùÓĞÊé¼®ĞÅÏ¢\n");
-	printf("\t\t\t\t2.ÉêÇëVIP\n");
-	printf("\t\t\t\t3.ÕË»§³äÖµ\n");
-	printf("\t\t\t\t4.¹ºÂòÖ¸¶¨IDµÄÊé¼®\n");
-	printf("\t\t\t\t5.²é¿´±¾´Î¹ºÎïÇåµ¥\n");
-	printf("\t\t\t\t6.ÍË³öÏµÍ³\n");
-	printf("\t\t\t\t7.·µ»ØµÇÂ¼\n");
+	printf("\t\t\t\t1.æ˜¾ç¤ºæ‰€æœ‰ä¹¦ç±ä¿¡æ¯\n");
+	printf("\t\t\t\t2.ç”³è¯·VIP\n");
+	printf("\t\t\t\t3.è´¦æˆ·å……å€¼\n");
+	printf("\t\t\t\t4.è´­ä¹°æŒ‡å®šIDçš„ä¹¦ç±\n");
+	printf("\t\t\t\t5.æŸ¥çœ‹æœ¬æ¬¡è´­ç‰©æ¸…å•\n");
+	printf("\t\t\t\t6.é€€å‡ºç³»ç»Ÿ\n");
+	printf("\t\t\t\t7.è¿”å›ç™»å½•\n");
 	printf("\t\t\t******************************************\n");
 	printf("\t\t\t******************************************\n");
-	printf("\t\t\tµ±Ç°ÓÃ»§:%s Óà¶î:%.2f »áÔ±: %d\n",user_buffer[current_logined_user_in_buffer].user_name,user_buffer[current_logined_user_in_buffer].balance,user_buffer[current_logined_user_in_buffer].isVIP);
-	printf("\t\t\tÇëÊäÈëÄãµÄÑ¡Ôñ:");
+	printf("\t\t\tå½“å‰ç”¨æˆ·:%s ä½™é¢:%.2f ä¼šå‘˜: %d\n",user_buffer[current_logined_user_in_buffer].user_name,user_buffer[current_logined_user_in_buffer].balance,user_buffer[current_logined_user_in_buffer].isVIP);
+	printf("\t\t\tè¯·è¾“å…¥ä½ çš„é€‰æ‹©:");
 	fflush(stdin);
 	scanf("%d",&choice);
 
@@ -1599,8 +1542,8 @@ void print_user_menu()
 	}
 	else if(choice==6)
 	{
-		system("cls");
-		printf("Ğ»Ğ»ÄúµÄ¹âÁÙ ÔÙ¼û\n");
+		clear_screen();
+		printf("è°¢è°¢æ‚¨çš„å…‰ä¸´ å†è§\n");
 		exit(0);
 	}
 	else if(choice==7)
@@ -1609,7 +1552,7 @@ void print_user_menu()
 	}
 	else
 	{
-		printf("ÊäÈë´íÎó! ÈÎÒâ°´¼üÖØĞÂÊäÈë!");
+		printf("è¾“å…¥é”™è¯¯! ä»»æ„æŒ‰é”®é‡æ–°è¾“å…¥!");
 		fflush(stdin);
 		getchar();
 		print_user_menu();
@@ -1618,10 +1561,10 @@ void print_user_menu()
 
 void system_config_login()
 {
-	printf("\t\t\t³¢ÊÔ´ÓÓ²ÅÌ¶ÁÈ¡¹ÜÀíÔ±ÅäÖÃ,ÇëÉÔºó......\n");
+	printf("\t\t\tå°è¯•ä»ç¡¬ç›˜è¯»å–ç®¡ç†å‘˜é…ç½®,è¯·ç¨å......\n");
 	printf("\t\t\t");
 	read_admins_file();
-	system("pause");
+	pause_and_wait();
 	fflush(stdin);
 	
 	char name[20];
@@ -1633,14 +1576,14 @@ void system_config_login()
 	int password_error_time=0;
 
 
-	system("cls");
+	clear_screen();
 	printf("#######################################################\n");
-	printf("»¶Ó­À´µ½¹ÜÀíÔ±µÇÂ¼Ïòµ¼\n\n");
+	printf("æ¬¢è¿æ¥åˆ°ç®¡ç†å‘˜ç™»å½•å‘å¯¼\n\n");
 	printf("#######################################################\n");
 
 	while(1)
 	{
-		printf("ÊäÈë¹ÜÀíÔ±Ãû×Ö:");
+		printf("è¾“å…¥ç®¡ç†å‘˜åå­—:");
 		scanf("%s",name);
 
 		for(j=0;j<admins_count;j++)
@@ -1654,15 +1597,15 @@ void system_config_login()
 
 		if (found_flag==0)
 		{
-			printf("´íÎó ¸Ã¹ÜÀíÔ±²»´æÔÚ\n");
-			printf("ÈÎÒâ°´¼üÖØÊÔ!\n");
-			system("pause");
+			printf("é”™è¯¯ è¯¥ç®¡ç†å‘˜ä¸å­˜åœ¨\n");
+			printf("ä»»æ„æŒ‰é”®é‡è¯•!\n");
+			pause_and_wait();
 			
 			name_error_time++;
 			if (name_error_time>=3)
 			{
-				printf("ÑÏÖØ´íÎó!!! ÄãÒÑ¾­ %d ´ÎÊä´íÕË»§Ãû\n",name_error_time);
-				printf("¾Ü¾øµÇÂ¼!\n");
+				printf("ä¸¥é‡é”™è¯¯!!! ä½ å·²ç» %d æ¬¡è¾“é”™è´¦æˆ·å\n",name_error_time);
+				printf("æ‹’ç»ç™»å½•!\n");
 				exit(0);
 			}
 		}
@@ -1674,9 +1617,9 @@ void system_config_login()
 
 	while(1)
 	{
-		printf("ÇëÊäÈëÄãµÄÃÜÂë(ÏÔÊ¾ÎªĞÇºÅ):");
+		printf("è¯·è¾“å…¥ä½ çš„å¯†ç (æ˜¾ç¤ºä¸ºæ˜Ÿå·):");
 		input_secret(password);
-		printf("ÇëÈ·ÈÏÃÜÂë:");
+		printf("è¯·ç¡®è®¤å¯†ç :");
 		input_secret(password_confirm);
 
 		if (strcmp(password,password_confirm)==0)
@@ -1686,21 +1629,21 @@ void system_config_login()
 			{
 				if(strcmp(password_confirm,admin_buffer[j].admin_password)==0)
 				{
-					printf("µÇÂ½³É¹¦, ÈÎÒâ°´¼ü¼ÌĞø½øÈëÏµÍ³ÉèÖÃ\n");
-					system("pause");
+					printf("ç™»é™†æˆåŠŸ, ä»»æ„æŒ‰é”®ç»§ç»­è¿›å…¥ç³»ç»Ÿè®¾ç½®\n");
+					pause_and_wait();
 					print_system_config_menu();
 					break;
 				}
 				else
 				{
 					password_error_time++;
-					printf("ÕË»§ %s ¶ÔÓ¦µÄÃÜÂë²»ÕıÈ·\n",admin_buffer[j].admin_name);
-					printf("ÇëÈÎÒâ°´¼üÖØĞÂÊäÈë\n");
-					system("pause");
+					printf("è´¦æˆ· %s å¯¹åº”çš„å¯†ç ä¸æ­£ç¡®\n",admin_buffer[j].admin_name);
+					printf("è¯·ä»»æ„æŒ‰é”®é‡æ–°è¾“å…¥\n");
+					pause_and_wait();
 					if (password_error_time>=3)
 					{
-						printf("ÑÏÖØ´íÎó!!! ÄãÒÑ¾­ %d ´ÎÊä´íÃÜÂë!\n",password_error_time);
-						printf("¾Ü¾øµÇÂ¼!\n");
+						printf("ä¸¥é‡é”™è¯¯!!! ä½ å·²ç» %d æ¬¡è¾“é”™å¯†ç !\n",password_error_time);
+						printf("æ‹’ç»ç™»å½•!\n");
 						exit(0);
 					}
 					break;
@@ -1710,8 +1653,8 @@ void system_config_login()
 		}
 		else
 		{
-			printf("Á½´ÎÊäÈëµÄÃÜÂë²»Í¬! ÈÎÒâ°´¼üÖØÊÔ\n");
-			system("pause");
+			printf("ä¸¤æ¬¡è¾“å…¥çš„å¯†ç ä¸åŒ! ä»»æ„æŒ‰é”®é‡è¯•\n");
+			pause_and_wait();
 		}
 	}
 }
@@ -1721,12 +1664,12 @@ void print_admin_list()
 	read_admins_file();
 	int i;
 	
-	printf("Ãû×Ö\t\tÃÜÂë\t\n");
+	printf("åå­—\t\tå¯†ç \t\n");
 	for(i=0;i<admins_count;i++)
 	{
 		printf("%-15s %-15s\n",admin_buffer[i].admin_name,admin_buffer[i].admin_password);
 	}
-	system("pause");
+	pause_and_wait();
 	print_system_config_menu();
 }
 
@@ -1735,12 +1678,12 @@ void print_user_list()
 	read_users_file();
 	int i;
 	
-	printf("ÓÃ»§Ãû\t\tÃÜÂë\t\tÓà¶î\t\tÊÇ·ñVIP\t\n");
+	printf("ç”¨æˆ·å\t\tå¯†ç \t\tä½™é¢\t\tæ˜¯å¦VIP\t\n");
 	for(i=0;i<users_count;i++)
 	{
 		printf("%-15s\t%-15s\t%-15.2f\t%-15d\n",user_buffer[i].user_name,user_buffer[i].user_password,user_buffer[i].balance,user_buffer[i].isVIP);
 	}
-	system("pause");
+	pause_and_wait();
 	print_system_config_menu();
 }
 
@@ -1749,19 +1692,19 @@ void del_book_config()
 	int choice;
 	
 	printf("\t\t\t******************************************\n");
-	printf("\t\t\t*************Êé¼®ÅäÖÃÇå³ı*****************\n");
+	printf("\t\t\t*************ä¹¦ç±é…ç½®æ¸…é™¤*****************\n");
 	printf("\t\t\t******************************************\n");
 	
-	printf("ÊäÈë1È·¶¨²Ù×÷,ÈÎÒâ°´¼ü·µ»Ø²Ëµ¥\n");
+	printf("è¾“å…¥1ç¡®å®šæ“ä½œ,ä»»æ„æŒ‰é”®è¿”å›èœå•\n");
 	
-	printf("ÎÒµÄÑ¡Ôñ:");
+	printf("æˆ‘çš„é€‰æ‹©:");
 	scanf("%d",&choice);
 	
 	if(choice==1)
 	{
 		system("del book.dat");
-		printf("É¾³ıÍ¼ÊéÊı¾İÍê³É!!!!!!!!\n");
-		system("pause");
+		printf("åˆ é™¤å›¾ä¹¦æ•°æ®å®Œæˆ!!!!!!!!\n");
+		pause_and_wait();
 		print_system_config_menu();
 	}
 	else
@@ -1775,19 +1718,19 @@ void del_user_config()
 	int choice;
 	
 	printf("\t\t\t******************************************\n");
-	printf("\t\t\t*************ÓÃ»§ÅäÖÃÇå³ı*****************\n");
+	printf("\t\t\t*************ç”¨æˆ·é…ç½®æ¸…é™¤*****************\n");
 	printf("\t\t\t******************************************\n");
 	
-	printf("ÊäÈë1È·¶¨²Ù×÷,ÈÎÒâ°´¼ü·µ»Ø²Ëµ¥\n");
+	printf("è¾“å…¥1ç¡®å®šæ“ä½œ,ä»»æ„æŒ‰é”®è¿”å›èœå•\n");
 	
-	printf("ÎÒµÄÑ¡Ôñ:");
+	printf("æˆ‘çš„é€‰æ‹©:");
 	scanf("%d",&choice);
 	
 	if(choice==1)
 	{
 		system("del user.dat");
-		printf("É¾³ıÓÃ»§Êı¾İÍê³É!!!!!!!!\n");
-		system("pause");
+		printf("åˆ é™¤ç”¨æˆ·æ•°æ®å®Œæˆ!!!!!!!!\n");
+		pause_and_wait();
 		print_system_config_menu();
 	}
 	else
@@ -1811,17 +1754,17 @@ void new_user_regist()
 	
 	while(1)
 	{
-		system("cls");
+		clear_screen();
 		printf("#######################################################\n");
-		printf("»¶Ó­À´µ½Í¼Êé¹İÓÃ»§´´½¨Ïòµ¼\n");
+		printf("æ¬¢è¿æ¥åˆ°å›¾ä¹¦é¦†ç”¨æˆ·åˆ›å»ºå‘å¯¼\n");
 		printf("#######################################################\n");
 		
-		printf("¸ÃÏòµ¼½«°ïÖúÄã´´½¨Ò»¸öÆÕÍ¨ÓÃ»§ÕËºÅ ÈÎÒâ°´¼ü¼ÌĞø\n");
-		system("pause");
+		printf("è¯¥å‘å¯¼å°†å¸®åŠ©ä½ åˆ›å»ºä¸€ä¸ªæ™®é€šç”¨æˆ·è´¦å· ä»»æ„æŒ‰é”®ç»§ç»­\n");
+		pause_and_wait();
 
 		while(1)
 		{
-			printf("ÊäÈëÄãµÄÃû×Ö:");
+			printf("è¾“å…¥ä½ çš„åå­—:");
 			scanf("%s",name);
 
 			for(j=0;j<users_count;j++)
@@ -1834,9 +1777,9 @@ void new_user_regist()
 
 			if (override_flag==1)
 			{
-				printf("´íÎó! ´æÔÚÍ¬ÃûÓÃ»§! \n");
-				printf("ÈÎÒâ°´¼üÖØĞÂÊäÈëÓÃ»§Ãû!\n");
-				system("pause");
+				printf("é”™è¯¯! å­˜åœ¨åŒåç”¨æˆ·! \n");
+				printf("ä»»æ„æŒ‰é”®é‡æ–°è¾“å…¥ç”¨æˆ·å!\n");
+				pause_and_wait();
 			}
 			else
 			{
@@ -1846,13 +1789,13 @@ void new_user_regist()
 
 		while(1)
 		{
-			printf("ÇëÊäÈëÃÜÂë(ÏÔÊ¾ÎªĞÇºÅ):");
+			printf("è¯·è¾“å…¥å¯†ç (æ˜¾ç¤ºä¸ºæ˜Ÿå·):");
 			input_secret(password);
-			printf("ÇëÈ·ÈÏÃÜÂë:");
+			printf("è¯·ç¡®è®¤å¯†ç :");
 			input_secret(password_confirm);
 			if (strcmp(password,password_confirm)==0)
 			{
-				printf("³É¹¦! ĞÂµÄÓÃ»§ÒÑ¾­Ìí¼Ó\n");
+				printf("æˆåŠŸ! æ–°çš„ç”¨æˆ·å·²ç»æ·»åŠ \n");
 				strcpy(user_buffer[users_count].user_name,name);
 				strcpy(user_buffer[users_count].user_password,password);
 				users_count++;
@@ -1860,15 +1803,15 @@ void new_user_regist()
 			}
 			else
 			{
-				printf("Á½´ÎÊäÈëµÄÃÜÂë²»Í¬ ÇëÖØÊÔ!\n");
+				printf("ä¸¤æ¬¡è¾“å…¥çš„å¯†ç ä¸åŒ è¯·é‡è¯•!\n");
 			}
 		}
 		break;
 	}
-	printf("ÕıÔÚĞ´Èë´ÅÅÌ.............\n");
+	printf("æ­£åœ¨å†™å…¥ç£ç›˜.............\n");
 	write_users_file();
-	printf("ÓÃ»§Êı¾İĞ´Èë´ÅÅÌ³É¹¦........ÈÎÒâ°´¼ü·µ»ØÏµÍ³µÇÂ¼²Ëµ¥\n");
-	system("pause");
+	printf("ç”¨æˆ·æ•°æ®å†™å…¥ç£ç›˜æˆåŠŸ........ä»»æ„æŒ‰é”®è¿”å›ç³»ç»Ÿç™»å½•èœå•\n");
+	pause_and_wait();
 	
 	
 	print_system_menu();
@@ -1878,21 +1821,21 @@ void print_system_config_menu()
 {
 	int choice;
 
-	system("cls");
+	clear_screen();
 
 	printf("\t\t\t******************************************\n");
-	printf("\t\t\t*************ÏµÍ³ÉèÖÃ*********************\n");
+	printf("\t\t\t*************ç³»ç»Ÿè®¾ç½®*********************\n");
 	printf("\t\t\t******************************************\n");
-	printf("\t\t\t\t1.ÏÔÊ¾µ±Ç°µÄ¹ÜÀíÔ±ÁĞ±í\n");
-	printf("\t\t\t\t2.ĞÂ½¨¹ÜÀíÔ±\n");
-	printf("\t\t\t\t3.Çå³ıÊé¼®ĞÅÏ¢ÎÄ¼ş\n");
-	printf("\t\t\t\t4.Çå³ıÓÃ»§ĞÅÏ¢ÎÄ¼ş\n");
-	printf("\t\t\t\t5.ÏÔÊ¾µ±Ç°ËùÓĞÓÃ»§\n");
-	printf("\t\t\t\t6.É¾³ıÖ¸¶¨Ãû×ÖÓÃ»§\n");
-	printf("\t\t\t\t7.·µ»ØµÇÂ¼\n");
+	printf("\t\t\t\t1.æ˜¾ç¤ºå½“å‰çš„ç®¡ç†å‘˜åˆ—è¡¨\n");
+	printf("\t\t\t\t2.æ–°å»ºç®¡ç†å‘˜\n");
+	printf("\t\t\t\t3.æ¸…é™¤ä¹¦ç±ä¿¡æ¯æ–‡ä»¶\n");
+	printf("\t\t\t\t4.æ¸…é™¤ç”¨æˆ·ä¿¡æ¯æ–‡ä»¶\n");
+	printf("\t\t\t\t5.æ˜¾ç¤ºå½“å‰æ‰€æœ‰ç”¨æˆ·\n");
+	printf("\t\t\t\t6.åˆ é™¤æŒ‡å®šåå­—ç”¨æˆ·\n");
+	printf("\t\t\t\t7.è¿”å›ç™»å½•\n");
 	printf("\t\t\t******************************************\n");
 	printf("\t\t\t******************************************\n");
-	printf("\t\t\tÇëÊäÈëÄãµÄÑ¡Ôñ:");
+	printf("\t\t\tè¯·è¾“å…¥ä½ çš„é€‰æ‹©:");
 	fflush(stdin);
 	scanf("%d",&choice);
 
@@ -1906,16 +1849,16 @@ void print_system_config_menu()
 	}
 	else if (choice==3)
 	{
-		system("cls");
-		printf("¾¯¸æ! Õâ½«¶ªÊ§ËùÓĞµÄÊé¼®ĞÅÏ¢ÅäÖÃÎÄ¼ş°üÀ¨ÒÑ¾­±£´æµÄÊé¼®!");
-		system("pause");
+		clear_screen();
+		printf("è­¦å‘Š! è¿™å°†ä¸¢å¤±æ‰€æœ‰çš„ä¹¦ç±ä¿¡æ¯é…ç½®æ–‡ä»¶åŒ…æ‹¬å·²ç»ä¿å­˜çš„ä¹¦ç±!");
+		pause_and_wait();
 		del_book_config();
 	}
 	else if (choice==4)
 	{
-		system("cls");
-		printf("¾¯¸æ! Õâ½«¶ªÊ§ËùÓĞµÄÓÃ»§ĞÅÏ¢ÅäÖÃÎÄ¼ş°üÀ¨ÒÑ¾­±£´æµÄÊé¼®!");
-		system("pause");
+		clear_screen();
+		printf("è­¦å‘Š! è¿™å°†ä¸¢å¤±æ‰€æœ‰çš„ç”¨æˆ·ä¿¡æ¯é…ç½®æ–‡ä»¶åŒ…æ‹¬å·²ç»ä¿å­˜çš„ä¹¦ç±!");
+		pause_and_wait();
 		del_user_config();
 	}
 	else if (choice==5)
@@ -1932,7 +1875,7 @@ void print_system_config_menu()
 	}
 	else
 	{
-		printf("ÊäÈë´íÎó! ÈÎÒâ°´¼üÖØĞÂÊäÈë!");
+		printf("è¾“å…¥é”™è¯¯! ä»»æ„æŒ‰é”®é‡æ–°è¾“å…¥!");
 		fflush(stdin);
 		getchar();
 		print_system_config_menu();
@@ -1943,19 +1886,19 @@ void print_system_menu(void)
 {
 	int choice;
 
-	system("cls");
+	clear_screen();
 
 	printf("\t\t\t******************************************\n");
-	printf("\t\t\t**************Í¼Êé¹İÏµÍ³µÇÂ¼**************\n");
+	printf("\t\t\t**************å›¾ä¹¦é¦†ç³»ç»Ÿç™»å½•**************\n");
 	printf("\t\t\t******************************************\n");
-	printf("\t\t\t\t1.¹ÜÀíÔ±µÇÂ¼\n");
-	printf("\t\t\t\t2.ÓÃ»§µÇÂ¼\n");
-	printf("\t\t\t\t3.Í¼Êé¹İÏµÍ³ÉèÖÃ\n");
-	printf("\t\t\t\t4.ĞÂÓÃ»§×¢²á\n");
-	printf("\t\t\t\t5.ÍË³öÏµÍ³\n");
+	printf("\t\t\t\t1.ç®¡ç†å‘˜ç™»å½•\n");
+	printf("\t\t\t\t2.ç”¨æˆ·ç™»å½•\n");
+	printf("\t\t\t\t3.å›¾ä¹¦é¦†ç³»ç»Ÿè®¾ç½®\n");
+	printf("\t\t\t\t4.æ–°ç”¨æˆ·æ³¨å†Œ\n");
+	printf("\t\t\t\t5.é€€å‡ºç³»ç»Ÿ\n");
 	printf("\t\t\t******************************************\n");
 	printf("\t\t\t******************************************\n");
-	printf("\t\t\tÇëÊäÈëÄãµÄÑ¡Ôñ:");
+	printf("\t\t\tè¯·è¾“å…¥ä½ çš„é€‰æ‹©:");
 	scanf("%d",&choice);
 	if (choice==1)
 	{
@@ -1967,9 +1910,9 @@ void print_system_menu(void)
 	}
 	else if (choice==3)
 	{
-		system("cls");
-		printf("Äã½«·ÃÎÊÏµÍ³ÉèÖÃ²Ëµ¥! ÎªÁË°²È« ĞèÒªÑéÖ¤ÄãµÄ¹ÜÀíÔ±Éí·İ!\n");
-		system("pause");
+		clear_screen();
+		printf("ä½ å°†è®¿é—®ç³»ç»Ÿè®¾ç½®èœå•! ä¸ºäº†å®‰å…¨ éœ€è¦éªŒè¯ä½ çš„ç®¡ç†å‘˜èº«ä»½!\n");
+		pause_and_wait();
 		system_config_login();
 	}
 	else if (choice==4)
@@ -1978,13 +1921,13 @@ void print_system_menu(void)
 	}
 	else if (choice==5)
 	{
-		system("cls");
-		printf("°İ°İ!\n");
+		clear_screen();
+		printf("æ‹œæ‹œ!\n");
 		exit(0);
 	}
 	else
 	{
-		printf("ÊäÈë´íÎó! ÈÎÒâ°´¼üÖØĞÂÊäÈë!");
+		printf("è¾“å…¥é”™è¯¯! ä»»æ„æŒ‰é”®é‡æ–°è¾“å…¥!");
 		fflush(stdin);
 		getchar();
 		print_system_menu();

@@ -12,4 +12,4 @@ elseif(WIN32)
 endif()
 
 add_executable(${OUTPUT_BIN_NAME} 
-    Library_Mangement_System.c)
+    main.c utils.c common.h utils.h)
