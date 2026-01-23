@@ -23,6 +23,7 @@ struct AdminInfo
 	string _adminPassword;
 };
 vector<AdminInfo> g_adminVec;
+AdminInfo *g_pCurrentLoginedAdmin = nullptr;
 
 struct UserInfo
 {
@@ -72,7 +73,7 @@ vector<ShopList> g_shopListVec;
 bool g_isUserLogined = false;
 bool g_isAdminLogined = false;
 
-void createAdminMenu(void);
+void createAdmin(void);
 void printAdminMenu(void);
 void printSystemMenu(void);
 void printSystemConfigMenu();
@@ -86,16 +87,13 @@ void printSystemConfigMenu();
 
 void readAdminDataFile()
 {
-	FILE *fp = NULL;
-	int i = 0;
-
 	ifstream adminFileStream;
 	adminFileStream.open("admin.dat", std::ios::in);
 	if (!adminFileStream.is_open())
 	{
 		printf("管理员配置数据文件在当前目录下不存在! 任意按键启动向导创建管理员!\n");
 		getchar();
-		createAdminMenu();
+		createAdmin();
 	}
 	else
 	{
@@ -240,12 +238,11 @@ void writeBookDataFile()
 	}
 }
 
-void createAdminMenu(void)
+void createAdmin(void)
 {
 	readAdminDataFile();
 	
 	string name;
-	bool dupFlag = false;
 
 	while(1)
 	{
@@ -259,20 +256,14 @@ void createAdminMenu(void)
 			printf("输入你的名字:");
 			std::cin >> name;
 
-			std::find_if(g_adminVec.begin(), g_adminVec.end(), [&name, &dupFlag](const AdminInfo& admin) {
-				if (admin._adminName == name)
-				{
-					dupFlag = true;
-					return true;
-				}
-				return false;
+			auto it = std::find_if(g_adminVec.begin(), g_adminVec.end(), [&name](const AdminInfo& admin) {
+				return admin._adminName == name;
 			});
 
-			if (dupFlag)
+			if (it != g_adminVec.end())
 			{
 				printf("错误! 存在同名管理员! \n");
 				printf("任意按键重新输入!\n");
-				dupFlag=0;
 			}
 			else
 			{
@@ -335,7 +326,8 @@ void showAllBooks()
 		printf("ID\t\t 名字\t\t 作者\t\t 简介\t\t 价格\t\t 库存量\t\t \n");
 		for (const auto& book : g_bookVec)
 		{
-			printf("%-15d %-15s %-15s %-15s %-15.2f %-15d\n", book._bookId, book._bookName, book._bookAuthor, book._bookIntroduce, book._bookPrice, book._bookCount);
+			printf("%-15s %-15s %-15s %-15s %-15.2f %-15d\n", \
+				book._bookId.c_str(), book._bookName.c_str(), book._bookAuthor.c_str(), book._bookIntroduce.c_str(), book._bookPrice, book._bookCount);
 		}
 		getchar();
 		return;
@@ -345,9 +337,6 @@ void showAllBooks()
 void addBook()
 {
 	readBookDataFile();
-	
-	int i = 0;
-	bool dupFlag = false;
 
 	printf("******************************************\n");
 	printf("***********添加新书向导*****************\n");
@@ -356,27 +345,20 @@ void addBook()
 	BookInfo bookInfo;
 	printf("请输入这本书的ID:");
 	cin >> bookInfo._bookId;
-	bool dupFlag = false;
 	
 	while(1)
 	{
 		printf("请输入书名:");
 		cin >> bookInfo._bookName;
 
-		std::find_if(g_bookVec.begin(), g_bookVec.end(), [&bookInfo, &dupFlag](const BookInfo& book) {
-			if (book._bookName == bookInfo._bookName)
-			{
-				dupFlag = true;
-				return true;
-			}
-			return false;
+		auto it = std::find_if(g_bookVec.begin(), g_bookVec.end(), [&bookInfo](const BookInfo& book) {
+			return book._bookName == bookInfo._bookName;
 		});
 
-		if (dupFlag)
+		if (it != g_bookVec.end())
 		{
 			printf("存在相同书名\n");
 			printf("任意按键重新输入书名\n");
-			dupFlag = false;
 			getchar();
 		}
 		else
@@ -573,7 +555,7 @@ void queryBookIntroduceById(void)
 		for (auto it = g_bookVec.begin(); it != g_bookVec.end(); ++it) {
 			if (it->_bookId == tmpString) {
 				printf("##################图书简介#####################\n");
-				printf("%s\n", it->_bookIntroduce);
+				printf("%s\n", it->_bookIntroduce.c_str());
 				printf("##################图书简介#####################\n");
 				cout << "任意按键继续";
 				getchar();
@@ -600,7 +582,7 @@ void sortBookByPrice()
 	printf("ID\t\t 名字\t\t 作者\t\t 简介\t\t 价格\t\t 库存量\t\t \n");
 	for (const auto& book : g_bookVec)
 	{
-		printf("%-15d %-15s %-15s %-15s %-15.2f %-15d\n", book._bookId, book._bookName, book._bookAuthor, book._bookIntroduce, book._bookPrice, book._bookCount);
+		printf("%-15s %-15s %-15s %-15s %-15.2f %-15d\n", book._bookId.c_str(), book._bookName.c_str(), book._bookAuthor.c_str(), book._bookIntroduce.c_str(), book._bookPrice, book._bookCount);
 	}
 	getchar();
 	
@@ -615,7 +597,8 @@ void getPriceSum()
 
 	for(auto& book : g_bookVec)
 	{
-		printf("%-15d %-15s %-15s %-15s %-15.2f %-15d\n",book._bookId,book._bookName,book._bookAuthor,book._bookIntroduce,book._bookPrice,book._bookCount);
+		printf("%-15s %-15s %-15s %-15s %-15.2f %-15d\n", \
+			book._bookId.c_str(), book._bookName.c_str(), book._bookAuthor.c_str(), book._bookIntroduce.c_str(), book._bookPrice, book._bookCount);
 	}
 
 	for(auto& book : g_bookVec)
@@ -704,7 +687,7 @@ bool adminLogin(void)
 				else
 				{
 					errCount++;
-					printf("账户 %s 对应的密码不正确\n", pAdminInfo->_adminName);
+					printf("账户[%s]对应的密码不正确\n", pAdminInfo->_adminName.c_str());
 					printf("请任意按键重新输入\n");
 					getchar();
 					if (errCount>=3)
@@ -857,76 +840,61 @@ bool getVIP()
 
 void userBalanceCharge(void)
 {
-	char password[20];
-	char password_confirm[20];
-	float charge;
+	string password;
+	double charge = 0.0;
 
 	clearScreen();
 	printf("#######################################################\n");
 	printf("欢迎进行图书馆用户账户充值\n");
 	printf("#######################################################\n");
-	printf("为了安全,我们需要重新确认你的身份\n");
+	printf("我们需要重新确认你的身份\n");
 
 
 	while(1)
 	{
-		printf("请输入密码(将显示为星):");
-		input_secret(password);
-		printf("请确认密码:");
-		input_secret(password_confirm);
-
-		if (strcmp(password,password_confirm)==0)
+		printf("请输入密码:");
+		cin >> password;
+	
+		while(1)
 		{
-
-			while(1)
+			if(password == g_pCurrentLoginedUser->_userPassword)
 			{
-				if(strcmp(password_confirm,user_buffer[current_logined_user_in_buffer].user_password)==0)
-				{
-					while(1)
-					{	
-						printf("请输入你想要充值的金额:");
-						scanf("%f",&charge);
-						if(charge<0)
-						{
-							printf("金额不能小于0 请重新输入\n");
-						}
-						else
-						{
-							user_buffer[current_logined_user_in_buffer].balance=user_buffer[current_logined_user_in_buffer].balance+charge;
-							break;
-						}
-					}	
-					write_users_file();
-					printf("充值成功 任意按键返回用户菜单\n");
-					getchar();
-					print_user_menu();
-					break;
-				}
-				else
-				{
-					printf("账户名%s 对应的密码错误\n",user_buffer[current_logined_user_in_buffer].user_name);
-					printf("申请VIP失败\n");
-					print_user_menu();
-					break;
-				}
+				while(1)
+				{	
+					printf("请输入你想要充值的金额:");
+					cin >> charge;
+					if(charge < 0)
+					{
+						printf("金额不能小于0 请重新输入\n");
+						continue;
+					}
+					else
+					{
+						g_pCurrentLoginedUser->_balance += charge;
+						break;
+					}
+				}	
+				writeUserDataFile();
+				printf("充值成功 任意按键返回\n");
+				getchar();
+				return;
 			}
-			break;
-		}
-		else
-		{
-			printf("输入错误! 任意按键重新输入!\n");
+			else
+			{
+				printf("账户名%s 对应的密码错误\n", g_pCurrentLoginedUser->_userName.c_str());
+				printf("充值失败!\n");
+				return;
+			}
 		}
 	}
 }
 
-void buy_book_via_id(void)
+void buyBookById(void)
 {
-	read_books_file();
-	
-	int i;
-	int found_flag=0;
-	int id;
-	int count;
+	readBookDataFile();
+
+	string bookId;
+	BookInfo *pBookInfo;
 
 	printf("******************************************\n");
 	printf("*****************购买图书*****************\n");
@@ -935,108 +903,92 @@ void buy_book_via_id(void)
 	while(1)
 	{
 		printf("请输入你想购买的书的ID:");
-		scanf("%d",&id);
+		cin >> bookId;
 
-		for (i = 0; i < books_count; ++i)
+		for (auto &bookInfo : g_bookVec)
 		{
-			if(book_buffer[i].book_id==id)
+			if (bookInfo._bookId == bookId)
 			{
-				found_flag=1;
+				pBookInfo = &bookInfo;
 				break;
 			}
 		}
 
-		if (found_flag==0)
-		{
-			printf("不存在ID对应的书\n");
-			printf("任意按键重新输入ID\n");
-			found_flag=0;
-			getchar();
-		}
-		
-		else
-		{
-			break;
-		}
-
+		printf("不存在ID对应的书\n");
+		printf("任意按键重新输入ID\n");
+		getchar();
+		continue;
 	}
 	
 	while(1)
 	{	
 		printf("请输入你想购买的数量:");
-		scanf("%d",&count);
+		int count = 0;
+		cin >> count;
 		
-		if(book_buffer[i].book_storage_count < count)
+		if(pBookInfo->_bookCount < count)
 		{
 			printf("对不起! 该书没有你想买的数量那么多! 去看看别的\n");
 			getchar();
-			print_user_menu();
 			break;
 		}
-		else if(book_buffer[i].book_price*count > user_buffer[current_logined_user_in_buffer].balance)
+		else if(pBookInfo->_bookPrice * count > g_pCurrentLoginedUser->_balance)
 		{
 			printf("不好意思 你的余额已经不够你买想买的书了 去看看别的吧\n");
 			printf("你可以去用户菜单充值!\n");
 			getchar();
-			print_user_menu();
 			break;
 		}
 		else
 		{	
-			book_buffer[i].book_storage_count=book_buffer[i].book_storage_count-count;
-			if(user_buffer[current_logined_user_in_buffer].isVIP==1)
+			pBookInfo->_bookCount = pBookInfo->_bookCount - count;
+			if(g_pCurrentLoginedUser->_isVIP == 1)
 			{
 				printf("你是VIP 你拥有9折优惠!\n");
-				user_buffer[current_logined_user_in_buffer].balance=user_buffer[current_logined_user_in_buffer].balance-book_buffer[i].book_price*count*0.9;
+				g_pCurrentLoginedUser->_balance = g_pCurrentLoginedUser->_balance - (pBookInfo->_bookPrice * count * 0.9);
 			}
 			else
 			{
 				printf("你不是VIP 你没有9折优惠!\n");
 				printf("你可以办理VIP会员!\n");
-				user_buffer[current_logined_user_in_buffer].balance=user_buffer[current_logined_user_in_buffer].balance-book_buffer[i].book_price*count;
+				g_pCurrentLoginedUser->_balance = g_pCurrentLoginedUser->_balance - (pBookInfo->_bookPrice * count);
 			}
-			shop_list[bought_times_count].book_id=id;
-			shop_list[bought_times_count].buy_count=count;
-			strcpy(shop_list[bought_times_count].book_author,book_buffer[i].book_author);
-			shop_list[bought_times_count].book_price=book_buffer[i].book_price;
-			bought_times_count++;
+			ShopList shopList;
+			shopList._bookInfo = *pBookInfo;
+			shopList._buyCount = count;
+			g_shopListVec.push_back(shopList);
+			
 			printf("购买成功!");
 			break;
 		}
 	}
 	
 	printf("正在写入磁盘...........\n");
-	write_books_file();
-	write_users_file();
-	printf("已经成功购买! 任意按键返回管理员菜单\n");
+	writeBookDataFile();
+	writeUserDataFile();
+	printf("已经成功购买! 任意按键返回\n");
 	getchar();
-	print_user_menu();
 }
 
-void show_shop_list(void)
+void showShopList(void)
 {
 	printf("******************************************\n");
 	printf("***************购买清单*******************\n");
 	printf("******************************************\n");
 	printf("\n");
 	
-	int i;
-	float total;
 	
 	printf("ID\t\t 作者\t\t 单价\t\t 购买数量\t\t 合计\t\n");
 	
-	for(i=0;i<bought_times_count;i++)
+	for(size_t i = 0; i < g_shopListVec.size(); i++)
 	{
-	printf("%-15d %-15s %-15.2f %-15d %-15.2f\n",shop_list[i].book_id,shop_list[i].book_author,shop_list[i].book_price,shop_list[i].buy_count,shop_list[i].book_price*shop_list[i].buy_count);
+		printf("%-15s %-15s %-15.2f %-15d %-15.2f\n",g_shopListVec[i]._bookInfo._bookId.c_str(),g_shopListVec[i]._bookInfo._bookAuthor.c_str(),g_shopListVec[i]._bookInfo._bookPrice,g_shopListVec[i]._buyCount,g_shopListVec[i]._bookInfo._bookPrice*g_shopListVec[i]._buyCount);
 	}
-	
 	getchar();
-	
-	print_user_menu();
 	
 }
 
-void admin_show_book_info()
+void adminShowBookInfo()
 {
 	clearScreen();
 
@@ -1045,229 +997,206 @@ void admin_show_book_info()
 	printf("\t\t\t******************************************\n");
 	printf("\n");
 	
-	admin_show_all_books(book_first_node);
+	for (auto& book : g_bookVec)
+	{
+		printf("ID:%s 名字:%s 作者:%s 简介:%s 价格:%.2f 库存量:%d\n",book._bookId.c_str(),book._bookName.c_str(),book._bookAuthor.c_str(),book._bookIntroduce.c_str(),book._bookPrice,book._bookCount);
+	}
+	printf("任意按键返回!");
+	getchar();
 }
 
-void admin_book_operate()
+void adminBookMenu()
 {
-	int choice;
+	while (1) {
+		clearScreen();
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t**********管理员图书操作员菜单************\n");
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t\t1.图书入库\n");
+		printf("\t\t\t\t2.图书出库(按ID)\n");
+		printf("\t\t\t\t3.修改对应ID图书库存\n");
+		printf("\t\t\t\t4.修改对应ID图书信息\n");
+		printf("\t\t\t\t5.返回管理员菜单\n");
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t请输入你的选择:");
+		int opt = 0;
+		cin >> opt;
 
-	clearScreen();
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t**********管理员图书操作员菜单************\n");
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t\t1.图书入库\n");
-	printf("\t\t\t\t2.图书出库(按ID)\n");
-	printf("\t\t\t\t3.修改对应ID图书库存\n");
-	printf("\t\t\t\t4.修改对应ID图书信息\n");
-	printf("\t\t\t\t5.返回管理员菜单\n");
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t请输入你的选择:");
-	fflush(stdin);
-	scanf("%d",&choice);
-	
-	
-	if (choice==1)
-	{
-		append_book();
-	}
-	else if (choice==2)
-	{
-		delete_book_by_id();
-	}
-	else if (choice==3)
-	{
-		edit_book_storage_by_id();
-	}
-	else if (choice==4)
-	{
-		edit_book_info_by_id();
-	}
-	else if (choice==5)
-	{
-		print_admin_menu();
-	}
-	else
-	{
-		printf("输入错误! 任意按键重新输入!!!");
-		fflush(stdin);
-		system("admin");
-		admin_book_operate();
-	}	
-}
-
-void admin_book_info_look_up()
-{
-	int choice;
-
-	clearScreen();
-
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t**********管理员查询员菜单****************\n");
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t\t1.按照图书单价排序显示\n");
-	printf("\t\t\t\t2.计算所有图书总价\n");
-	printf("\t\t\t\t3.按照ID查找图书简介\n");
-	printf("\t\t\t\t4.返回管理员菜单\n");
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t请输入你的选择:");
-	fflush(stdin);
-	scanf("%d",&choice);
-
-	if (choice==1)
-	{
-		sub_sort_books_by_price();
-	}
-	else if (choice==2)
-	{
-		get_price_sum();
-	}
-	else if (choice==3)
-	{
-		admin_lookup_introduce_by_id();
-	}
-	else if (choice==4)
-	{
-		print_admin_menu();
-	}
-	else
-	{
-		printf("输入错误! 任意按键重新输入!!!");
-		fflush(stdin);
-		getchar();
-		admin_book_info_look_up();
+		switch (opt)
+		{
+		case 1:
+			addBook();
+			break;
+		case 2:
+			deleteBookById();
+			break;
+		case 3:
+			editBookStorageById();
+			break;
+		case 4:
+			editBookInfoById();
+			break;
+		case 5:
+			return;
+			break;
+		default:
+			cout << "输入错误! 任意按键重新输入!!!\n";
+			getchar();
+			break;
+		}
 	}
 }
 
-void print_admin_menu(void)
+void adminBookInfoLookup()
 {
-	read_books_file();
-	book_buffer_to_linklist();
-	int choice;
+	while (1) {
+		clearScreen();
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t**********管理员查询员菜单****************\n");
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t\t1.按照图书单价排序显示\n");
+		printf("\t\t\t\t2.计算所有图书总价\n");
+		printf("\t\t\t\t3.按照ID查找图书简介\n");
+		printf("\t\t\t\t4.返回管理员菜单\n");
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t请输入你的选择:");
+		int opt = 0;
+		cin >> opt;
 
-	clearScreen();
+		switch (opt)
+		{
+		case 1:
+			sortBookByPrice();
+			break;
+		case 2:
+			getPriceSum();
+			break;
+		case 3:
+			queryBookIntroduceById();
+			break;
+		case 4:
+			return;
+			break;
+		default:
+			cout << "输入错误! 任意按键重新输入!!!\n";
+			getchar();
+			break;
+		}
+	}
+}
 
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t**********图书馆管理员菜单****************\n");
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t\t1.显示书籍信息\n");
-	printf("\t\t\t\t2.图书操作\n");
-	printf("\t\t\t\t3.图书查询\n");
-	printf("\t\t\t\t4.返回系统登录\n");
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t请输入你的选择:");
-	fflush(stdin);
-	scanf("%d",&choice);
+void printAdminMenu(void)
+{
+	while (1) {
+		readBookDataFile();
+		clearScreen();
 
-	if (choice==1)
-	{
-		admin_show_book_info();
-	}
-	else if (choice==2)
-	{
-		admin_book_operate();
-	}
-	else if (choice==3)
-	{
-		admin_book_info_look_up();
-	}
-	else if (choice==4)
-	{
-		print_system_menu();
-	}
-	else
-	{
-		printf("输入错误! 任意按键重新输入!!!");
-		fflush(stdin);
-		getchar();
-		print_admin_menu();
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t**********图书馆管理员菜单****************\n");
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t\t1.显示书籍信息\n");
+		printf("\t\t\t\t2.图书操作\n");
+		printf("\t\t\t\t3.图书查询\n");
+		printf("\t\t\t\t4.返回系统登录\n");
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t请输入你的选择:");
+		
+		int opt = 0;
+		cin >> opt;
+
+		switch (opt)
+		{
+		case 1:
+			adminShowBookInfo();
+			break;
+		case 2:
+			adminBookMenu();
+			break;
+		case 3:
+			adminBookInfoLookup();
+			break;
+		case 4:
+			return;
+			break;
+		default:
+			cout << "输入错误! 任意按键重新输入!!!\n";
+			getchar();
+			break;
+		}
 	}
 }
 
 void print_user_menu()
 {
-	read_users_file();
-	read_books_file();
-	book_buffer_to_linklist();
-	int choice;
+	while (1) {
+		readUserDataFile();
+		readBookDataFile();
 
-	clearScreen();
-
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t************图书馆用户菜单****************\n");
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t\t1.显示所有书籍信息\n");
-	printf("\t\t\t\t2.申请VIP\n");
-	printf("\t\t\t\t3.账户充值\n");
-	printf("\t\t\t\t4.购买指定ID的书籍\n");
-	printf("\t\t\t\t5.查看本次购物清单\n");
-	printf("\t\t\t\t6.退出系统\n");
-	printf("\t\t\t\t7.返回登录\n");
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t当前用户:%s 余额:%.2f 会员: %d\n",user_buffer[current_logined_user_in_buffer].user_name,user_buffer[current_logined_user_in_buffer].balance,user_buffer[current_logined_user_in_buffer].isVIP);
-	printf("\t\t\t请输入你的选择:");
-	fflush(stdin);
-	scanf("%d",&choice);
-
-	if (choice==1)
-	{
-		user_show_all_books(book_first_node);
-	}
-	else if (choice==2)
-	{
-		getVIP();
-	}
-	else if (choice==3)
-	{
-		charge_for_balance();
-	}
-	else if (choice==4)
-	{
-		buy_book_via_id();
-	}
-	else if (choice==5)
-	{
-		show_shop_list();
-	}
-	else if(choice==6)
-	{
 		clearScreen();
-		printf("谢谢您的光临 再见\n");
-		exit(0);
-	}
-	else if(choice==7)
-	{
-		print_system_menu();
-	}
-	else
-	{
-		printf("输入错误! 任意按键重新输入!");
-		fflush(stdin);
-		getchar();
-		print_user_menu();
+
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t************图书馆用户菜单****************\n");
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t\t1.显示所有书籍信息\n");
+		printf("\t\t\t\t2.申请VIP\n");
+		printf("\t\t\t\t3.账户充值\n");
+		printf("\t\t\t\t4.购买指定ID的书籍\n");
+		printf("\t\t\t\t5.查看本次购物清单\n");
+		printf("\t\t\t\t6.退出系统\n");
+		printf("\t\t\t\t7.返回登录\n");
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t当前用户:%s 余额:%.2f 会员: %d\n", g_pCurrentLoginedUser->_userName.c_str(), g_pCurrentLoginedUser->_balance, g_pCurrentLoginedUser->_isVIP);
+		printf("\t\t\t请输入你的选择:");
+		int opt = 0;
+		cin >> opt;
+		switch (opt)
+		{
+		case 1:
+			showAllBooks();
+			break;
+		case 2:
+			getVIP();
+			break;
+		case 3:
+			userBalanceCharge();
+			break;
+		case 4:
+			buyBookById();
+			break;
+		case 5:
+			showShopList();
+			break;
+		case 6:
+			clearScreen();
+			printf("谢谢您的光临 再见\n");
+			exit(0);
+			break;
+		case 7:
+			return;
+			break;
+		}
 	}
 }
 
-void system_config_login()
+bool systemConfigLogin()
 {
 	printf("\t\t\t尝试从硬盘读取管理员配置,请稍后......\n");
 	printf("\t\t\t");
-	read_admins_file();
+	readAdminDataFile();
 	getchar();
 	fflush(stdin);
 	
-	char name[20];
-	char password[20];
-	char password_confirm[20];
-	int i,j;
-	int found_flag=0;
-	int name_error_time=0;
-	int password_error_time=0;
+	string name;
+	string password;
+	string passwordConfirm;
 
+	AdminInfo *pAdminInfo;
+
+	int errCount = 0;
 
 	clearScreen();
 	printf("#######################################################\n");
@@ -1277,65 +1206,58 @@ void system_config_login()
 	while(1)
 	{
 		printf("输入管理员名字:");
-		scanf("%s",name);
+		cin >> name;
 
-		for(j=0;j<admins_count;j++)
+		for(auto &it : g_adminVec)
 		{
-			if (strcmp(name,admin_buffer[j].admin_name)==0)
+			if (it._adminName == name)
 			{
-				found_flag=1;
+				pAdminInfo = &it;
+				g_pCurrentLoginedAdmin = pAdminInfo;
 				break;
 			}
 		}
-
-		if (found_flag==0)
+		
+		printf("错误 该管理员不存在\n");
+		printf("任意按键重试!\n");
+		getchar();
+		
+		errCount++;
+		if (errCount >= 3)
 		{
-			printf("错误 该管理员不存在\n");
-			printf("任意按键重试!\n");
-			getchar();
-			
-			name_error_time++;
-			if (name_error_time>=3)
-			{
-				printf("严重错误!!! 你已经 %d 次输错账户名\n",name_error_time);
-				printf("拒绝登录!\n");
-				exit(0);
-			}
-		}
-		else
-		{
-			break;
+			printf("严重错误!!! 你已经 %d 次输错账户名\n", errCount);
+			printf("拒绝登录!\n");
+			exit(0);
 		}
 	}
 
 	while(1)
 	{
-		printf("请输入你的密码(显示为星号):");
-		input_secret(password);
+		printf("请输入你的密码:");
+		cin >> password;
 		printf("请确认密码:");
-		input_secret(password_confirm);
+		cin >> passwordConfirm;
 
-		if (strcmp(password,password_confirm)==0)
+		if (password == passwordConfirm)
 		{
-
 			while(1)
 			{
-				if(strcmp(password_confirm,admin_buffer[j].admin_password)==0)
+				if(password == pAdminInfo->_adminPassword)
 				{
 					printf("登陆成功, 任意按键继续进入系统设置\n");
 					getchar();
-					print_system_config_menu();
+					return true;
 					break;
 				}
 				else
 				{
-					password_error_time++;
-					printf("账户 %s 对应的密码不正确\n",admin_buffer[j].admin_name);
+					errCount++;
+					printf("账户[%s]对应的密码不正确\n",pAdminInfo->_adminName.c_str());
 					printf("请任意按键重新输入\n");
 					getchar();
-					if (password_error_time>=3)
+					if (errCount >= 3)
 					{
-						printf("严重错误!!! 你已经 %d 次输错密码!\n",password_error_time);
+						printf("严重错误!!! 你已经 %d 次输错密码!\n", errCount);
 						printf("拒绝登录!\n");
 						exit(0);
 					}
@@ -1350,40 +1272,35 @@ void system_config_login()
 			getchar();
 		}
 	}
+	return false;
 }
 
-void print_admin_list()
+void printAdminList()
 {
-	read_admins_file();
-	int i;
+	readAdminDataFile();
 	
 	printf("名字\t\t密码\t\n");
-	for(i=0;i<admins_count;i++)
+	for(auto &it : g_adminVec)
 	{
-		printf("%-15s %-15s\n",admin_buffer[i].admin_name,admin_buffer[i].admin_password);
+		printf("%-15s %-15s\n", it._adminName.c_str(), it._adminPassword.c_str());
 	}
 	getchar();
-	print_system_config_menu();
 }
 
-void print_user_list()
+void printUserList()
 {
-	read_users_file();
-	int i;
+	readUserDataFile();
 	
 	printf("用户名\t\t密码\t\t余额\t\t是否VIP\t\n");
-	for(i=0;i<users_count;i++)
+	for(auto &it : g_userVec)
 	{
-		printf("%-15s\t%-15s\t%-15.2f\t%-15d\n",user_buffer[i].user_name,user_buffer[i].user_password,user_buffer[i].balance,user_buffer[i].isVIP);
+		printf("%-15s %-15s %-15.2f %-15d\n", it._userName.c_str(), it._userPassword.c_str(), it._balance, it._isVIP);
 	}
 	getchar();
-	print_system_config_menu();
 }
 
-void del_book_config()
+void delBookDataFile()
 {
-	int choice;
-	
 	printf("\t\t\t******************************************\n");
 	printf("\t\t\t*************书籍配置清除*****************\n");
 	printf("\t\t\t******************************************\n");
@@ -1391,24 +1308,22 @@ void del_book_config()
 	printf("输入1确定操作,任意按键返回菜单\n");
 	
 	printf("我的选择:");
-	scanf("%d",&choice);
+	int opt = 0;
+	cin >> opt;
 	
-	if(choice==1)
+	if(opt==1)
 	{
-		system("del book.dat");
+		g_bookVec.clear();
+		writeBookDataFile();
 		printf("删除图书数据完成!!!!!!!!\n");
 		getchar();
-		print_system_config_menu();
 	}
-	else
-	{
-		print_system_config_menu();
-	}
+	return;
 }
 
-void del_user_config()
+void delUserDataFile()
 {
-	int choice;
+	int opt = 0;
 	
 	printf("\t\t\t******************************************\n");
 	printf("\t\t\t*************用户配置清除*****************\n");
@@ -1417,34 +1332,26 @@ void del_user_config()
 	printf("输入1确定操作,任意按键返回菜单\n");
 	
 	printf("我的选择:");
-	scanf("%d",&choice);
+	cin >> opt;
 	
-	if(choice==1)
+	if(opt == 1)
 	{
-		system("del user.dat");
+		g_userVec.clear();
+		writeUserDataFile();
 		printf("删除用户数据完成!!!!!!!!\n");
 		getchar();
-		print_system_config_menu();
-	}
-	else
-	{
-		print_system_config_menu();
 	}
 }
 
-void new_user_regist()
+void registNewUser()
 {
-	char name[20];
-	char password[20];
-	char password_confirm[20];
+	string name;
+	string password;
+	string passwordConfirm;
+
+	bool dupFlag = false;
 	
-	int i,j;
-	char choice[10];
-	
-	int override_flag=0;
-	
-	read_users_file();
-	
+	readUserDataFile();
 	while(1)
 	{
 		clearScreen();
@@ -1458,17 +1365,18 @@ void new_user_regist()
 		while(1)
 		{
 			printf("输入你的名字:");
-			scanf("%s",name);
+			cin >> name;
 
-			for(j=0;j<users_count;j++)
+			for (auto &userInfo : g_userVec)
 			{
-				if (strcmp(name,user_buffer[j].user_name)==0)
+				if (userInfo._userName == name)
 				{
-					override_flag=1;
+					dupFlag = true;
+					break;
 				}
 			}
 
-			if (override_flag==1)
+			if (dupFlag)
 			{
 				printf("错误! 存在同名用户! \n");
 				printf("任意按键重新输入用户名!\n");
@@ -1482,16 +1390,19 @@ void new_user_regist()
 
 		while(1)
 		{
-			printf("请输入密码(显示为星号):");
-			input_secret(password);
+			printf("请输入密码:");
+			cin >> password;
 			printf("请确认密码:");
-			input_secret(password_confirm);
-			if (strcmp(password,password_confirm)==0)
+			cin >> passwordConfirm;
+			if (password == passwordConfirm)
 			{
 				printf("成功! 新的用户已经添加\n");
-				strcpy(user_buffer[users_count].user_name,name);
-				strcpy(user_buffer[users_count].user_password,password);
-				users_count++;
+				UserInfo newUser;
+				newUser._userName = name;
+				newUser._userPassword = password;
+				newUser._balance = 0.0;
+				newUser._isVIP = false;
+				g_userVec.push_back(newUser);
 				break;
 			}
 			else
@@ -1502,132 +1413,173 @@ void new_user_regist()
 		break;
 	}
 	printf("正在写入磁盘.............\n");
-	write_users_file();
-	printf("用户数据写入磁盘成功........任意按键返回系统登录菜单\n");
+	writeUserDataFile();
+	printf("用户数据写入磁盘成功........任意按键返回\n");
 	getchar();
-	
-	
-	print_system_menu();
 }
 
-void print_system_config_menu()
+void printSystemConfigMenu()
 {
-	int choice;
-
-	clearScreen();
-
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t*************系统设置*********************\n");
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t\t1.显示当前的管理员列表\n");
-	printf("\t\t\t\t2.新建管理员\n");
-	printf("\t\t\t\t3.清除书籍信息文件\n");
-	printf("\t\t\t\t4.清除用户信息文件\n");
-	printf("\t\t\t\t5.显示当前所有用户\n");
-	printf("\t\t\t\t6.删除指定名字用户\n");
-	printf("\t\t\t\t7.返回登录\n");
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t请输入你的选择:");
-	fflush(stdin);
-	scanf("%d",&choice);
-
-	if (choice==1)
-	{
-		print_admin_list();
-	}
-	else if (choice==2)
-	{
-		create_admin_wizard();
-	}
-	else if (choice==3)
-	{
+	while (1) {
 		clearScreen();
-		printf("警告! 这将丢失所有的书籍信息配置文件包括已经保存的书籍!");
-		getchar();
-		del_book_config();
-	}
-	else if (choice==4)
-	{
-		clearScreen();
-		printf("警告! 这将丢失所有的用户信息配置文件包括已经保存的书籍!");
-		getchar();
-		del_user_config();
-	}
-	else if (choice==5)
-	{
-		print_user_list();
-	}
-	else if(choice==6)
-	{
-		delete_user_by_name();
-	}
-	else if(choice==7)
-	{
-		print_system_menu();
-	}
-	else
-	{
-		printf("输入错误! 任意按键重新输入!");
-		fflush(stdin);
-		getchar();
-		print_system_config_menu();
+
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t*************系统设置*********************\n");
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t\t1.显示当前的管理员列表\n");
+		printf("\t\t\t\t2.新建管理员\n");
+		printf("\t\t\t\t3.清除书籍信息文件\n");
+		printf("\t\t\t\t4.清除用户信息文件\n");
+		printf("\t\t\t\t5.显示当前所有用户\n");
+		printf("\t\t\t\t6.删除指定名字用户\n");
+		printf("\t\t\t\t7.返回登录\n");
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t请输入你的选择:");
+		
+		int opt = 0;
+		switch (opt) {
+		case 1:
+			printAdminList();
+			break;
+		case 2:
+			createAdmin();
+			break;
+		case 3:
+			clearScreen();
+			printf("警告! 这将丢失所有的书籍信息配置文件包括已经保存的书籍!\n");
+			getchar();
+			delBookDataFile();
+			break;
+		case 4:
+			clearScreen();
+			printf("警告! 这将丢失所有的用户信息配置文件包括已经保存的书籍!\n");
+			getchar();
+			delUserDataFile();
+			break;
+		case 5:
+			printUserList();
+			break;
+		case 6:
+			deleteUserByName();
+			break;
+		case 7:
+			return;
+			break;
+		default:
+			printf("输入错误! 任意按键重新输入!");
+			fflush(stdin);
+			getchar();	
+		}
+
+		/*
+		if (choice==1)
+		{
+			print_admin_list();
+		}
+		else if (choice==2)
+		{
+			create_admin_wizard();
+		}
+		else if (choice==3)
+		{
+			clearScreen();
+			printf("警告! 这将丢失所有的书籍信息配置文件包括已经保存的书籍!");
+			getchar();
+			del_book_config();
+		}
+		else if (choice==4)
+		{
+			clearScreen();
+			printf("警告! 这将丢失所有的用户信息配置文件包括已经保存的书籍!");
+			getchar();
+			del_user_config();
+		}
+		else if (choice==5)
+		{
+			print_user_list();
+		}
+		else if(choice==6)
+		{
+			delete_user_by_name();
+		}
+		else if(choice==7)
+		{
+			print_system_menu();
+		}
+		else
+		{
+			printf("输入错误! 任意按键重新输入!");
+			fflush(stdin);
+			getchar();
+			print_system_config_menu();
+		}
+		*/
 	}
 }
 
-void print_system_menu(void)
+void printSystemMenu(void)
 {
-	int choice;
-
-	clearScreen();
-
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t**************图书馆系统登录**************\n");
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t\t1.管理员登录\n");
-	printf("\t\t\t\t2.用户登录\n");
-	printf("\t\t\t\t3.图书馆系统设置\n");
-	printf("\t\t\t\t4.新用户注册\n");
-	printf("\t\t\t\t5.退出系统\n");
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t******************************************\n");
-	printf("\t\t\t请输入你的选择:");
-	scanf("%d",&choice);
-	if (choice==1)
-	{
-		admin_login();
-	}
-	else if (choice==2)
-	{
-		user_login();
-	}
-	else if (choice==3)
-	{
+	while (1) {
 		clearScreen();
-		printf("你将访问系统设置菜单! 为了安全 需要验证你的管理员身份!\n");
-		getchar();
-		system_config_login();
-	}
-	else if (choice==4)
-	{
-		new_user_regist();
-	}
-	else if (choice==5)
-	{
-		clearScreen();
-		printf("拜拜!\n");
-		exit(0);
-	}
-	else
-	{
-		printf("输入错误! 任意按键重新输入!");
-		fflush(stdin);
-		getchar();
-		print_system_menu();
+
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t**************图书馆系统登录**************\n");
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t\t1.管理员登录\n");
+		printf("\t\t\t\t2.用户登录\n");
+		printf("\t\t\t\t3.图书馆系统设置\n");
+		printf("\t\t\t\t4.新用户注册\n");
+		printf("\t\t\t\t5.退出系统\n");
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t******************************************\n");
+		printf("\t\t\t请输入你的选择:");
+		int opt = 0;
+		cin >> opt;
+
+		switch (opt)
+		{
+			case 1:
+				if (adminLogin())
+				{
+					printAdminMenu();
+				}
+				break;
+			case 2:
+				if (userLogin())
+				{
+					print_user_menu();
+				}
+				break;
+			case 3:
+				clearScreen();
+				printf("你将访问系统设置菜单! 为了安全 需要验证你的管理员身份!\n");
+				getchar();
+				if (systemConfigLogin())
+				{
+					printSystemConfigMenu();
+				}
+				break;
+			case 4:
+				registNewUser();
+				break;
+			case 5:
+				clearScreen();
+				printf("拜拜!\n");
+				exit(0);
+				break;
+			default:
+				printf("输入错误! 任意按键重新输入!");
+				fflush(stdin);
+				getchar();
+				break;
+		}
 	}
 }
 
 int main(int argc, char const *argv[])
 {
-	print_system_menu();
+	printSystemMenu();
+
+	return 0;
 }
