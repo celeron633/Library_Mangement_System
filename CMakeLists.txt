@@ -6,7 +6,7 @@ set(OUTPUT_BIN_NAME "main")
 
 if(LINUX)
     message("-- building for Linux")
-    set(CMAKE_C_FLAGS "-O0 -g -Wall -std=c++11")
+    set(CMAKE_C_FLAGS "-O0 -g -Wall -std=c++17")
 elseif(WIN32)
     message("-- building for Windows")
     set(CMAKE_CXX_FLAGS_RELEASE "/Od /Zi")
