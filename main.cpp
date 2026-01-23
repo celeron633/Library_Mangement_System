@@ -1,402 +1,235 @@
-#include <stdio.h>
-#include <conio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
 
-#ifndef MAX_BUFFER_SIZE
-#define MAX_BUFFER_SIZE 1024
-#endif
+#include <fstream>
 
-#ifndef MAX_RECORD_SIZE
-#define MAX_RECORD_SIZE 1024
-#endif
+#include "utils.h"
 
+using std::cin;
+using std::cout;
+using std::string;
+using std::vector;
+using std::ifstream;
 
-typedef struct admin
+struct AdminInfo
 {
-	char admin_name[20];
-	char admin_password[20];
-}admin;
+	string _adminName;
+	string _adminPassword;
+};
+vector<AdminInfo> g_adminVec;
 
-typedef struct user
+struct UserInfo
 {
-	char user_name[20];
-	char user_password[20];
-	float balance;
-	int isVIP;
-}user;
+	string 	_userName;
+	string 	_userPassword;
+	double 	_balance;
+	bool 	_isVIP;
+};
+vector<UserInfo> g_userVec;
 
-typedef struct book
+struct BookInfo
 {
-	int book_id;
-	char book_name[48];
-	char book_author[48];
-	char book_introduce[100];
-	float book_price;
-	int book_storage_count;
-}book;
+	string 	_bookId;
+	string 	_bookName;
+	string 	_bookAuthor;
+	string 	_bookIntroduce;
+	double 	_bookPrice;
+	int 	_bookCount;
+};
+vector<BookInfo> g_bookVec;
 
-typedef struct shoplist
+struct ShopList
 {
-	int book_id;
-	char book_author[48];
-	float book_price;
-	int buy_count;
-}shoplist;
+	BookInfo 	_bookInfo;
+	int 		_buyCount;
+};
+vector<ShopList> g_shopListVec;
 
-typedef struct books
+bool g_isUserLogined = false;
+bool g_isAdminLogined = false;
+
+void createAdminMenu(void);
+void printAdminMenu(void);
+void printSystemMenu(void);
+void printSystemConfigMenu();
+void printUserMenu(void);
+
+void adminBookInfoLookup();
+
+void systemAdminLogin();
+void printSystemConfigMenu();
+
+
+void readAdminDataFile()
 {
-	book data;
-	struct books *next;
-}books;
+	FILE *fp = NULL;
+	int i = 0;
 
-typedef struct admins
-{
-	admin data;
-	struct admins* next;
-}admins;
-
-typedef struct users
-{
-	user data;
-	struct users* next;
-}users;
-
-admin admin_buffer[MAX_BUFFER_SIZE];
-int admins_count;
-
-user user_buffer[MAX_BUFFER_SIZE];
-int users_count;
-
-book book_buffer[MAX_BUFFER_SIZE];
-int books_count;
-
-shoplist shop_list[MAX_BUFFER_SIZE];
-int bought_times_count;
-
-
-admins *admin_first_node;
-users *user_first_node;
-books *book_first_node;
-
-int current_logined_user_in_buffer;
-int is_user_logined;
-int is_admin_logined;
-
-void create_admin_wizard(void);
-void print_admin_menu(void);
-void print_system_menu(void);
-void print_user_menu(void);
-void admin_book_info_look_up();
-void system_config_login();
-void print_system_config_menu();
-
-
-
-void user_buffer_to_linklist()
-{
-	user_first_node=(users*)malloc(sizeof(users));
-	user_first_node->next=NULL;
-	users* new_node;
-	users* tail;
-	tail=user_first_node;
-
-	int i;
-
-	for(i=0;i<users_count;i++)
+	ifstream adminFileStream;
+	adminFileStream.open("admin.dat", std::ios::in);
+	if (!adminFileStream.is_open())
 	{
-		new_node=(users*)malloc(sizeof(users));
-		strcpy(new_node->data.user_name,user_buffer[i].user_name);
-		strcpy(new_node->data.user_password,user_buffer[i].user_password);
-		new_node->data.balance=user_buffer[i].balance;
-		new_node->data.isVIP=user_buffer[i].isVIP;
-
-		tail->next=new_node;
-		tail=new_node;
-		tail->next=NULL;
-	}
-	printf("用户数据链表创建成功!\n");
-}
-
-void linklist_to_user_buffer(users* u)
-{
-	int count;
-	int i=0;
-
-
-	if (user_first_node==NULL)
-	{
-		printf("用户数据链表没有初始化!\n");
-		return;
-	}
-	else
-	{
-		while(u->next!=NULL)
-		{
-			u=u->next;
-			strcpy(user_buffer[i].user_name,u->data.user_name);
-			strcpy(user_buffer[i].user_password,u->data.user_password);
-			user_buffer[i].balance=u->data.balance;
-			user_buffer[i].isVIP=u->data.isVIP;
-			i++;
-		}
-		users_count=i;
-		printf("用户数据链表成功复制到缓存数组\n");
-	}
-}
-
-void book_buffer_to_linklist()
-{
-	book_first_node=(books*)malloc(sizeof(books));
-	book_first_node->next=NULL;
-	books* new_node;
-	books* tail;
-	tail=book_first_node;
-
-	int i;
-
-	for(i=0;i<books_count;i++)
-	{
-		new_node=(books*)malloc(sizeof(books));
-		new_node->data.book_id=book_buffer[i].book_id;
-		strcpy(new_node->data.book_name,book_buffer[i].book_name);
-		strcpy(new_node->data.book_author,book_buffer[i].book_author);
-		strcpy(new_node->data.book_introduce,book_buffer[i].book_introduce);
-		new_node->data.book_price=book_buffer[i].book_price;
-		new_node->data.book_storage_count=book_buffer[i].book_storage_count;
-
-		tail->next=new_node;
-		tail=new_node;
-		tail->next=NULL;
-	}
-	printf("书本数据链表创建成功!\n");
-}
-
-void linklist_to_book_buffer(books* u)
-{
-	int count;
-	int i=0;
-
-
-	if (book_first_node==NULL)
-	{
-		printf("错误! 书本数据链表没有初始化\n");
-		return;
-	}
-	else
-	{
-		while(u->next!=NULL)
-		{
-			u=u->next;
-			book_buffer[i].book_id=u->data.book_id;
-			strcpy(book_buffer[i].book_name,u->data.book_name);
-			strcpy(book_buffer[i].book_author,u->data.book_author);
-			strcpy(book_buffer[i].book_introduce,u->data.book_introduce);
-
-			book_buffer[i].book_price=u->data.book_price;
-			book_buffer[i].book_storage_count=u->data.book_storage_count;
-
-			i++;
-		}
-
-		books_count=i;
-		printf("书本数据链表已经复制到缓存数组\n");
-	}
-}
-
-
-void read_admins_file()
-{
-	FILE *fp;
-	int i;
-
-	fp=fopen("./admin.dat","r");
-	if (fp==NULL)
-	{
-		printf("管理员配置数据文件在当前目录下不存在!\n");
-		printf("任意按键启动向导创建管理员!");
+		printf("管理员配置数据文件在当前目录下不存在! 任意按键启动向导创建管理员!\n");
 		getchar();
-		create_admin_wizard();
+		createAdminMenu();
 	}
 	else
 	{
-		fscanf(fp,"%d\n",&admins_count);
-
-		for(i=0;i<admins_count;i++)
+		string line;
+		while (getline(adminFileStream, line))
 		{
-			fscanf(fp,"%s%s",admin_buffer[i].admin_name,admin_buffer[i].admin_password);
+			AdminInfo admin;
+			size_t pos = line.find(' ');
+			admin._adminName = line.substr(0, pos);
+			admin._adminPassword = line.substr(pos + 1);
+			g_adminVec.push_back(admin);
 		}
 		printf("成功从磁盘读取管理员配置文件!\n");
-		fclose(fp);
+		adminFileStream.close();
 	}
 }
 
-
-
-void write_admins_file()
+void writeAdminDataFile()
 {
-	FILE* fp;
-	int i;
-
-	fp=fopen("./admin.dat","w");
-	if (fp==NULL)
+	std::ofstream adminFileStream;
+	adminFileStream.open("admin.dat", std::ios::out | std::ios::trunc);
+	if (!adminFileStream.is_open())
 	{
-		printf("发生一个未知的读写错误! 管理员配置文件创建失败\n");
-		return;
+		printf("发生一个未知的读写错误! 管理员配置文件[%s]创建失败\n", "admin.dat");
+		exit(1);
 	}
 	else
 	{
-		fprintf(fp,"%d\n",admins_count);
-
-		for(i=0;i<admins_count;i++)
+		for (const auto& admin : g_adminVec)
 		{
-			fprintf(fp,"%s %s\n",admin_buffer[i].admin_name,admin_buffer[i].admin_password);
+			adminFileStream << admin._adminName << " " << admin._adminPassword << "\n";
 		}
 		printf("成功将管理员缓存写入磁盘!\n");
-		fclose(fp);
+		adminFileStream.close();
 	}
 }
 
-void read_users_file()
+void readUserDataFile()
 {
-	FILE *fp;
-	int i;
-
-	fp=fopen("./user.dat","r");
-	if (fp==NULL)
+	ifstream userFileStream;
+	userFileStream.open("user.dat", std::ios::in);
+	if (!userFileStream.is_open())
 	{
-		printf("用户配置文件在当前目录下没有找到!\n");
-		printf("所以没有加载任何用户数据\n");
-		printf("任意按键返回系统登录菜单");
-		fflush(stdin);
+		printf("用户配置数据文件在当前目录下不存在! 没有加载任何用户数据! 任意按键返回系统登录菜单!\n");
 		getchar();
-		print_system_menu();
+		printSystemMenu();
 	}
 	else
 	{
-		fscanf(fp,"%d\n",&users_count);
-
-		for(i=0;i<users_count;i++)
+		string line;
+		while (getline(userFileStream, line))
 		{
-			fscanf(fp,"%s%s%f%d",user_buffer[i].user_name,user_buffer[i].user_password,&user_buffer[i].balance,&user_buffer[i].isVIP);
+			UserInfo user;
+			size_t pos1 = line.find(' ');
+			size_t pos2 = line.find(' ', pos1 + 1);
+			size_t pos3 = line.find(' ', pos2 + 1);
+			user._userName = line.substr(0, pos1);
+			user._userPassword = line.substr(pos1 + 1, pos2 - pos1 - 1);
+			user._balance = std::stod(line.substr(pos2 + 1, pos3 - pos2 - 1));
+			user._isVIP = (line.substr(pos3 + 1) == "1");
+			g_userVec.push_back(user);
 		}
-		printf("成功从磁盘读取用户配置文件\n");
-		fclose(fp);
+		printf("成功从磁盘读取用户配置文件!\n");
+		userFileStream.close();
 	}
 }
 
 
-void write_users_file()
+void writeUserDataFile()
 {
-	FILE* fp;
-	int i;
-
-	fp=fopen("./user.dat","w");
-	if (fp==NULL)
+	std::ofstream userFileStream;
+	userFileStream.open("user.dat", std::ios::out | std::ios::trunc);
+	if (!userFileStream.is_open())
 	{
-		printf("发生一个未知的读写错误 用户配置文件创建失败!");
+		printf("发生一个未知的读写错误! 用户配置文件[%s]创建失败\n", "user.dat");
+		exit(1);
 	}
 	else
 	{
-		fprintf(fp,"%d\n",users_count);
-
-		for(i=0;i<users_count;i++)
+		for (const auto& user : g_userVec)
 		{
-			fprintf(fp,"%s %s %f %d\n",user_buffer[i].user_name,user_buffer[i].user_password,user_buffer[i].balance,user_buffer[i].isVIP);
+			userFileStream << user._userName << " " << user._userPassword << " " << user._balance << " " << (user._isVIP ? "1" : "0") << "\n";
 		}
-		printf("成功将用户配置缓存写入磁盘!\n");
-		fclose(fp);
+		printf("成功将用户缓存写入磁盘!\n");
+		userFileStream.close();
 	}
 }
 
-void read_books_file()
+void readBookDataFile()
 {
-	FILE *fp;
-	int i;
-
-	fp=fopen("./book.dat","r");
-	if (fp==NULL)
+	ifstream bookFileStream;
+	bookFileStream.open("book.dat", std::ios::in);
+	if (!bookFileStream.is_open())
 	{
-		printf("在当前目录下没有找到图书信息配置文件\n");
-		printf("所以没有加载任何图书信息\n");
-		printf("任意按键返回系统登录菜单\n");
+		printf("图书配置数据文件在当前目录下不存在! 没有加载任何图书数据! 任意按键返回系统登录菜单!\n");
 		getchar();
+		printSystemMenu();
 	}
 	else
 	{
-		fscanf(fp,"%d\n",&books_count);
-
-		for(i=0;i<books_count;i++)
+		string line;
+		while (getline(bookFileStream, line))
 		{
-			fscanf(fp,"%d%s%s%s%f%d",&book_buffer[i].book_id,book_buffer[i].book_name,book_buffer[i].book_author,book_buffer[i].book_introduce,&book_buffer[i].book_price,&book_buffer[i].book_storage_count);
+			BookInfo book;
+			size_t pos1 = line.find(' ');
+			size_t pos2 = line.find(' ', pos1 + 1);
+			size_t pos3 = line.find(' ', pos2 + 1);
+			size_t pos4 = line.find(' ', pos3 + 1);
+			size_t pos5 = line.find(' ', pos4 + 1);
+			book._bookId = line.substr(0, pos1);
+			book._bookName = line.substr(pos1 + 1, pos2 - pos1 - 1);
+			book._bookAuthor = line.substr(pos2 + 1, pos3 - pos2 - 1);
+			book._bookIntroduce = line.substr(pos3 + 1, pos4 - pos3 - 1);
+			book._bookPrice = std::stod(line.substr(pos4 + 1, pos5 - pos4 - 1));
+			book._bookCount = std::stoi(line.substr(pos5 + 1));
+			g_bookVec.push_back(book);
 		}
-		printf("成功从磁盘读取书籍配置文件!\n");
-		fclose(fp);
+		printf("成功从磁盘读取图书配置文件!\n");
+		bookFileStream.close();
 	}
 }
 
-
-void write_books_file()
+void writeBookDataFile()
 {
-	FILE* fp;
-	int i;
-
-	fp=fopen("./book.dat","w");
-	if (fp==NULL)
+	std::ofstream bookFileStream;
+	bookFileStream.open("book.dat", std::ios::out | std::ios::trunc);
+	if (!bookFileStream.is_open())
 	{
-		printf("发生一个未知的读写错误 书籍配置文件创建失败!");
+		printf("发生一个未知的读写错误! 图书配置文件[%s]创建失败\n", "book.dat");
+		exit(1);
 	}
 	else
 	{
-		fprintf(fp,"%d\n",books_count);
-
-		for(i=0;i<books_count;i++)
+		for (const auto& book : g_bookVec)
 		{
-			fprintf(fp,"%d %s %s %s %f %d\n",book_buffer[i].book_id,book_buffer[i].book_name,book_buffer[i].book_author,book_buffer[i].book_introduce,book_buffer[i].book_price,book_buffer[i].book_storage_count);
+			bookFileStream << book._bookId << " " << book._bookName << " " << book._bookAuthor << " " << book._bookIntroduce << " " << book._bookPrice << " " << book._bookCount << "\n";
 		}
-		printf("成功将书籍资料缓存写入磁盘!\n");
-		fclose(fp);
+		printf("成功将图书缓存写入磁盘!\n");
+		bookFileStream.close();
 	}
 }
 
-void input_secret(char *secret)
+void createAdminMenu(void)
 {
-	char temp;
-	int i=0;
+	readAdminDataFile();
+	
+	string name;
+	bool overrideFlag = false;
 
 	while(1)
 	{
-		temp=getch();
-		if (temp!='\r')
-		{
-			printf("*");
-			secret[i]=temp;
-			i++;
-		}
-		else
-		{
-			printf("\n");
-			break;
-		}
-		secret[i]='\0';
-	}
-}
-
-void create_admin_wizard(void)
-{
-	char name[20];
-	char password[20];
-	char password_confirm[20];
-	int i,j;
-	char choice[10];
-	int override_flag=0;
-	
-	read_admins_file();
-	
-	while(1)
-	{
-		system("cls");
+		clearScreen();
 		printf("#######################################################\n");
 		printf("欢迎来到管理员创建向导\n");
 		printf("#######################################################\n");
@@ -404,22 +237,22 @@ void create_admin_wizard(void)
 		while(1)
 		{
 			printf("输入你的名字:");
-			scanf("%s",name);
+			std::cin >> name;
 
-			for(j=0;j<admins_count;j++)
-			{
-				if (strcmp(name,admin_buffer[j].admin_name)==0)
+			std::find_if(g_adminVec.begin(), g_adminVec.end(), [&name, &overrideFlag](const AdminInfo& admin) {
+				if (admin._adminName == name)
 				{
-					override_flag=1;
+					overrideFlag = true;
+					return true;
 				}
-			}
+				return false;
+			});
 
-			if (override_flag==1)
+			if (overrideFlag)
 			{
 				printf("错误! 存在同名管理员! \n");
 				printf("任意按键重新输入!\n");
-				override_flag=0;
-				system("pause");
+				overrideFlag=0;
 			}
 			else
 			{
@@ -427,18 +260,22 @@ void create_admin_wizard(void)
 			}
 		}
 
+		std::string password;
+		std::string confirmPassword;
 		while(1)
 		{
-			printf("请输入密码(显示为星号):");
-			input_secret(password);
+			printf("请输入密码:");
+			std::cin >> password;
 			printf("请确认密码:");
-			input_secret(password_confirm);
-			if (strcmp(password,password_confirm)==0)
+			std::cin >> confirmPassword;
+			if (password == confirmPassword)
 			{
 				printf("成功! 新的管理员已经添加\n");
-				strcpy(admin_buffer[admins_count].admin_name,name);
-				strcpy(admin_buffer[admins_count].admin_password,password);
-				admins_count++;
+				AdminInfo newAdmin;
+				newAdmin._adminName = name;
+				newAdmin._adminPassword = password;
+				g_adminVec.push_back(newAdmin);
+
 				break;
 			}
 			else
@@ -446,143 +283,48 @@ void create_admin_wizard(void)
 				printf("两次输入的密码不同 请重试!\n");
 			}
 		}
+		std::string choice;
 		printf("继续创建管理员?(y/n):");
 		fflush(stdin);
-		scanf("%s",choice);
-		if (strcmp(choice,"n")==0 || strcmp(choice,"no")==0 || strcmp(choice,"0")==0)
+		cin >> choice;
+		if (choice == "n" || choice == "no" || choice == "0")
 		{
 			break;
 		}
 	}
 	printf("正在写入磁盘.............\n");
-	write_admins_file(admin_buffer);
+	writeAdminDataFile();
 	printf("写入磁盘成功........任意按键返回\n");
-	system("pause");
-	print_system_config_menu();
+	getchar();
+
+	return;
 }
 
-void add_admin_wizard(void)
+void showAllBooks()
 {
-	char name[20];
-	char password[20];
-	char password_confirm[20];
-	int i,j;
-	char choice[10];
-	int override_flag=0;
+	readBookDataFile();
 
-	while(1)
+	if (g_bookVec.empty())
 	{
-		system("cls");
-		printf("#######################################################\n");
-		printf("欢迎来到管理员添加向导\n\n");
-		printf("#######################################################\n");
-
-		while(1)
-		{
-			printf("你的名字:");
-			
-			scanf("%s",name);
-
-			for(j=0;j<admins_count;j++)
-			{
-				if (strcmp(name,admin_buffer[j].admin_name)==0)
-				{
-					override_flag=1;
-				}
-			}
-
-			if (override_flag==1)
-			{
-				printf("错误 存在同名管理员\n");
-				printf("请另外使用别的名字!\n");
-			}
-			else
-			{
-				break;
-			}
-		}
-
-		while(1)
-		{
-			printf("请输入密码(显示为星号):");
-			input_secret(password);
-			printf("请确认密码:");
-			input_secret(password_confirm);
-			if (strcmp(password,password_confirm)==0)
-			{
-				printf("好的! 成功添加新的管理员\n");
-				strcpy(admin_buffer[admins_count].admin_name,name);
-				strcpy(admin_buffer[admins_count].admin_password,password);
-				admins_count++;
-				break;
-			}
-			else
-			{
-				printf("两次输入的密码不同 请重试\n");
-			}
-		}
-		printf("继续添加管理员?(y/n):");
-		fflush(stdin);
-		scanf("%s",choice);
-		if (strcmp(choice,"n")==0 || strcmp(choice,"no")==0 || strcmp(choice,"0")==0)
-		{
-			break;
-		}
-	}
-}
-
-
-void admin_show_all_books(books* b)
-{
-	read_books_file();
-	book_buffer_to_linklist();
-
-	if (b==NULL)
-	{
-		printf("没有任何图书,任意按键返回管理员菜单!");
-		system("pause");
-		print_admin_menu();
+		printf("没有任何图书,任意按键返回!");
+		getchar();
+		return;
 	}
 	else
 	{
 		printf("ID\t\t 名字\t\t 作者\t\t 简介\t\t 价格\t\t 库存量\t\t \n");
-		while(b->next!=NULL)
+		for (const auto& book : g_bookVec)
 		{
-			b=b->next;
-			printf("%-15d %-15s %-15s %-15s %-15.2f %-15d\n",b->data.book_id,b->data.book_name,b->data.book_author,b->data.book_introduce,b->data.book_price,b->data.book_storage_count);
+			printf("%-15d %-15s %-15s %-15s %-15.2f %-15d\n", book._bookId, book._bookName, book._bookAuthor, book._bookIntroduce, book._bookPrice, book._bookCount);
 		}
-		system("pause");
-		print_admin_menu();
-	}
-}
-
-void user_show_all_books(books* b)
-{
-	read_books_file();
-	book_buffer_to_linklist();
-
-	if (b==NULL)
-	{
-		printf("没有任何图书 任意按键返回用户菜单!");
-		system("pause");
-		print_user_menu();
-	}
-	else
-	{
-		printf("ID\t\t 名字\t\t 作者\t\t 简介\t\t 价格\t\t 库存量\t\t \n");
-		while(b->next!=NULL)
-		{
-			b=b->next;
-			printf("%-15d %-15s %-15s %-15s %-15.2f %-15d\n",b->data.book_id,b->data.book_name,b->data.book_author,b->data.book_introduce,b->data.book_price,b->data.book_storage_count);
-		}
-		system("pause");
-		print_user_menu();
+		getchar();
+		return;
 	}
 }
 
 void append_book()
 {
-	read_books_file();
+	readBookDataFile();
 	
 	int i;
 	int override_flag=0;
@@ -983,7 +725,7 @@ void admin_login(void)
 	int password_error_time=0;
 
 
-	system("cls");
+	clearScreen();
 	printf("#######################################################\n");
 	printf("欢迎来到管理员登录向导\n\n");
 	printf("#######################################################\n");
@@ -1084,7 +826,7 @@ void user_login(void)
 	bought_times_count=0;
 
 
-	system("cls");
+	clearScreen();
 	printf("#######################################################\n");
 	printf("欢迎来到用户登录向导\n");
 	printf("#######################################################\n");
@@ -1173,7 +915,7 @@ void getVIP()
 	char password[20];
 	char password_confirm[20];
 
-	system("cls");
+	clearScreen();
 	printf("#######################################################\n");
 	printf("欢迎申请图书馆VIP\n");
 	printf("#######################################################\n");
@@ -1225,7 +967,7 @@ void charge_for_balance(void)
 	char password_confirm[20];
 	float charge;
 
-	system("cls");
+	clearScreen();
 	printf("#######################################################\n");
 	printf("欢迎进行图书馆用户账户充值\n");
 	printf("#######################################################\n");
@@ -1402,7 +1144,7 @@ void show_shop_list(void)
 
 void admin_show_book_info()
 {
-	system("cls");
+	clearScreen();
 
 	printf("\t\t\t******************************************\n");
 	printf("\t\t\t*************图书信息显示*****************\n");
@@ -1416,7 +1158,7 @@ void admin_book_operate()
 {
 	int choice;
 
-	system("cls");
+	clearScreen();
 	printf("\t\t\t******************************************\n");
 	printf("\t\t\t**********管理员图书操作员菜单************\n");
 	printf("\t\t\t******************************************\n");
@@ -1465,7 +1207,7 @@ void admin_book_info_look_up()
 {
 	int choice;
 
-	system("cls");
+	clearScreen();
 
 	printf("\t\t\t******************************************\n");
 	printf("\t\t\t**********管理员查询员菜单****************\n");
@@ -1511,7 +1253,7 @@ void print_admin_menu(void)
 	book_buffer_to_linklist();
 	int choice;
 
-	system("cls");
+	clearScreen();
 
 	printf("\t\t\t******************************************\n");
 	printf("\t\t\t**********图书馆管理员菜单****************\n");
@@ -1558,7 +1300,7 @@ void print_user_menu()
 	book_buffer_to_linklist();
 	int choice;
 
-	system("cls");
+	clearScreen();
 
 	printf("\t\t\t******************************************\n");
 	printf("\t\t\t************图书馆用户菜单****************\n");
@@ -1599,7 +1341,7 @@ void print_user_menu()
 	}
 	else if(choice==6)
 	{
-		system("cls");
+		clearScreen();
 		printf("谢谢您的光临 再见\n");
 		exit(0);
 	}
@@ -1633,7 +1375,7 @@ void system_config_login()
 	int password_error_time=0;
 
 
-	system("cls");
+	clearScreen();
 	printf("#######################################################\n");
 	printf("欢迎来到管理员登录向导\n\n");
 	printf("#######################################################\n");
@@ -1811,7 +1553,7 @@ void new_user_regist()
 	
 	while(1)
 	{
-		system("cls");
+		clearScreen();
 		printf("#######################################################\n");
 		printf("欢迎来到图书馆用户创建向导\n");
 		printf("#######################################################\n");
@@ -1878,7 +1620,7 @@ void print_system_config_menu()
 {
 	int choice;
 
-	system("cls");
+	clearScreen();
 
 	printf("\t\t\t******************************************\n");
 	printf("\t\t\t*************系统设置*********************\n");
@@ -1906,14 +1648,14 @@ void print_system_config_menu()
 	}
 	else if (choice==3)
 	{
-		system("cls");
+		clearScreen();
 		printf("警告! 这将丢失所有的书籍信息配置文件包括已经保存的书籍!");
 		system("pause");
 		del_book_config();
 	}
 	else if (choice==4)
 	{
-		system("cls");
+		clearScreen();
 		printf("警告! 这将丢失所有的用户信息配置文件包括已经保存的书籍!");
 		system("pause");
 		del_user_config();
@@ -1943,7 +1685,7 @@ void print_system_menu(void)
 {
 	int choice;
 
-	system("cls");
+	clearScreen();
 
 	printf("\t\t\t******************************************\n");
 	printf("\t\t\t**************图书馆系统登录**************\n");
@@ -1967,7 +1709,7 @@ void print_system_menu(void)
 	}
 	else if (choice==3)
 	{
-		system("cls");
+		clearScreen();
 		printf("你将访问系统设置菜单! 为了安全 需要验证你的管理员身份!\n");
 		system("pause");
 		system_config_login();
@@ -1978,7 +1720,7 @@ void print_system_menu(void)
 	}
 	else if (choice==5)
 	{
-		system("cls");
+		clearScreen();
 		printf("拜拜!\n");
 		exit(0);
 	}
