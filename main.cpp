@@ -1,3 +1,5 @@
+// WARNING: This is a C with Class project. DO NOT LEARN FROM IT!
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -11,11 +13,50 @@
 
 #include "utils.h"
 
+using std::endl;
 using std::cin;
 using std::cout;
 using std::string;
 using std::vector;
 using std::ifstream;
+
+// function declarations
+void printLoginMenu();
+void printSystemConfigMenu();
+void registNewUser();
+void delUserDataFile();
+void delBookDataFile();
+void printUserList();
+void printAdminList();
+bool systemConfigLogin();
+void printUserMenu();
+void printAdminMenu(void);
+void adminBookInfoLookup();
+void adminBookMenu();
+void adminShowBookInfo();
+void showShopList(void);
+void buyBookById(void);
+void userBalanceCharge(void);
+bool getVIP();
+bool userLogin(void);
+bool adminLogin(void);
+void getPriceSum();
+void sortBookByPrice();
+void queryBookIntroduceById(void);
+void editBookInfoById(void);
+void editBookStorageById();
+void deleteUserByName();
+void deleteBookById();
+void addBook();
+void showAllBooks();
+void createAdmin(void);
+void writeBookDataFile();
+int readBookDataFile();
+void writeUserDataFile();
+int readUserDataFile();
+void writeAdminDataFile();
+int readAdminDataFile();
+bool checkAdminDataFile();
 
 struct AdminInfo
 {
@@ -73,30 +114,36 @@ vector<ShopList> g_shopListVec;
 bool g_isUserLogined = false;
 bool g_isAdminLogined = false;
 
-void createAdmin(void);
-void printAdminMenu(void);
-void printSystemMenu(void);
-void printSystemConfigMenu();
-void printUserMenu(void);
-
-void adminBookInfoLookup();
-
-void systemAdminLogin();
-void printSystemConfigMenu();
-
-
-void readAdminDataFile()
+bool checkAdminDataFile()
 {
 	ifstream adminFileStream;
 	adminFileStream.open("admin.dat", std::ios::in);
 	if (!adminFileStream.is_open())
 	{
-		printf("管理员配置数据文件在当前目录下不存在! 任意按键启动向导创建管理员!\n");
-		getchar();
-		createAdmin();
+		return false;
 	}
 	else
 	{
+		adminFileStream.close();
+		return true;
+	}
+
+	return false;
+}
+
+int readAdminDataFile()
+{
+	ifstream adminFileStream;
+	adminFileStream.open("admin.dat", std::ios::in);
+	if (!adminFileStream.is_open())
+	{
+		printf("管理员配置数据文件在当前目录下不存在!\n");
+		getchar();
+		return -1;
+	}
+	else
+	{
+		g_adminVec.clear();
 		string line;
 		while (getline(adminFileStream, line))
 		{
@@ -109,6 +156,7 @@ void readAdminDataFile()
 		printf("成功从磁盘读取管理员配置文件!\n");
 		adminFileStream.close();
 	}
+	return g_adminVec.size();
 }
 
 void writeAdminDataFile()
@@ -131,18 +179,19 @@ void writeAdminDataFile()
 	}
 }
 
-void readUserDataFile()
+int readUserDataFile()
 {
 	ifstream userFileStream;
 	userFileStream.open("user.dat", std::ios::in);
 	if (!userFileStream.is_open())
 	{
-		printf("用户配置数据文件在当前目录下不存在! 没有加载任何用户数据! 任意按键返回系统登录菜单!\n");
+		printf("用户配置数据文件在当前目录下不存在! 没有加载任何用户数据!\n");
 		getchar();
-		printSystemMenu();
+		return -1;
 	}
 	else
 	{
+		g_userVec.clear();
 		string line;
 		while (getline(userFileStream, line))
 		{
@@ -159,6 +208,8 @@ void readUserDataFile()
 		printf("成功从磁盘读取用户配置文件!\n");
 		userFileStream.close();
 	}
+
+	return g_userVec.size();
 }
 
 
@@ -182,7 +233,7 @@ void writeUserDataFile()
 	}
 }
 
-void readBookDataFile()
+int readBookDataFile()
 {
 	g_bookVec.clear();
 
@@ -190,12 +241,13 @@ void readBookDataFile()
 	bookFileStream.open("book.dat", std::ios::in);
 	if (!bookFileStream.is_open())
 	{
-		printf("图书配置数据文件在当前目录下不存在! 没有加载任何图书数据! 任意按键返回系统登录菜单!\n");
+		printf("图书配置数据文件在当前目录下不存在! 没有加载任何图书数据! 任意按键继续!\n");
 		getchar();
-		printSystemMenu();
+		return -1;
 	}
 	else
 	{
+		g_bookVec.clear();
 		string line;
 		while (getline(bookFileStream, line))
 		{
@@ -216,6 +268,7 @@ void readBookDataFile()
 		printf("成功从磁盘读取图书配置文件!\n");
 		bookFileStream.close();
 	}
+	return g_bookVec.size();
 }
 
 void writeBookDataFile()
@@ -240,8 +293,6 @@ void writeBookDataFile()
 
 void createAdmin(void)
 {
-	readAdminDataFile();
-	
 	string name;
 
 	while(1)
@@ -614,7 +665,12 @@ void getPriceSum()
 bool adminLogin(void)
 {
 	printf("\t\t\t尝试从硬盘读取管理员配置,请稍后......\n");
-	readAdminDataFile();
+	int ret = readAdminDataFile();
+	if (ret == -1 || ret == 0) {
+		cout << "管理员配置文件不存在或者没有管理员记录! 请先创建管理员! 任意按键继续\n" << endl;
+		getchar();
+		createAdmin();
+	}
 	printf("\t\t\t读取管理员配置文件成功! 任意按键继续\n");
 	string name;
 	string password;
@@ -635,33 +691,24 @@ bool adminLogin(void)
 		printf("输入管理员名字:");
 		cin >> name;
 
-		for(auto &admin : g_adminVec)
+		auto it = std::find_if(g_adminVec.begin(), g_adminVec.end(), [&name](const AdminInfo& admin) {
+			return admin._adminName == name;
+		});
+		if (it != g_adminVec.end())
 		{
-			if (admin._adminName == name)
-			{
-				pAdminInfo = &admin;
-				tmpFlag = true;
-				break;
-			}
+			pAdminInfo = &(*it);
 		}
 
-		if (!tmpFlag)
+		printf("错误 该管理员不存在\n");
+		printf("任意按键重试!\n");
+		getchar();
+		
+		errCount++;
+		if (errCount >= 3)
 		{
-			printf("错误 该管理员不存在\n");
-			printf("任意按键重试!\n");
-			getchar();
-			
-			errCount++;
-			if (errCount >= 3)
-			{
-				printf("严重错误!!! 你已经 %d 次输错账户名\n", errCount);
-				printf("拒绝登录!\n");
-				exit(0);
-			}
-		}
-		else
-		{
-			break;
+			printf("严重错误!!! 你已经 %d 次输错账户名\n", errCount);
+			printf("拒绝登录!\n");
+			exit(0);
 		}
 	}
 
@@ -713,7 +760,12 @@ bool adminLogin(void)
 bool userLogin(void)
 {
 	printf("正在从磁盘读取用户配置文件, 请稍后.........!\n");
-	readUserDataFile();
+	auto ret = readUserDataFile();
+	if (ret != 0) {
+		cout << "没有读取到任何用户配置文件! 请先注册用户! 任意按键继续\n" << endl;
+		getchar();
+		return false;
+	}
 	printf("读取用户文件成功\n");
 
 	string name;
@@ -733,31 +785,23 @@ bool userLogin(void)
 		printf("请输入你的用户名:");
 		cin >> name;
 
-		for(auto &userInfo : g_userVec)
+		auto it = std::find_if(g_userVec.begin(), g_userVec.end(), [&name](const UserInfo& user) {
+			return user._userName == name;
+		});
+		if (it != g_userVec.end())
 		{
-			if (userInfo._userName == name)
-			{
-				pUserInfo = &userInfo;
-				tmpFlag = true;
-				break;
-			}
+			pUserInfo = &(*it);
+			break;
 		}
 
-		if (!tmpFlag)
+		printf("错误! 你输入的用户名不存在\n");
+		printf("任意按键继续!\n");
+		getchar();
+		if (errCount++ >= 3)
 		{
-			printf("错误! 你输入的用户名不存在\n");
-			printf("任意按键继续!\n");
-			getchar();
-			if (errCount++ >= 3)
-			{
-				printf("严重错误!!! 你已经 %d 次输错账户名\n", errCount);
-				printf("拒绝登录!\n");
-				exit(0);
-			}
-		}
-		else
-		{
-			break;
+			printf("严重错误!!! 你已经 %d 次输错账户名\n", errCount);
+			printf("拒绝登录!\n");
+			exit(0);
 		}
 	}
 
@@ -1099,7 +1143,7 @@ void printAdminMenu(void)
 		printf("\t\t\t\t1.显示书籍信息\n");
 		printf("\t\t\t\t2.图书操作\n");
 		printf("\t\t\t\t3.图书查询\n");
-		printf("\t\t\t\t4.返回系统登录\n");
+		printf("\t\t\t\t4.返回\n");
 		printf("\t\t\t******************************************\n");
 		printf("\t\t\t******************************************\n");
 		printf("\t\t\t请输入你的选择:");
@@ -1129,7 +1173,7 @@ void printAdminMenu(void)
 	}
 }
 
-void print_user_menu()
+void printUserMenu()
 {
 	while (1) {
 		readUserDataFile();
@@ -1186,8 +1230,12 @@ bool systemConfigLogin()
 {
 	printf("\t\t\t尝试从硬盘读取管理员配置,请稍后......\n");
 	printf("\t\t\t");
-	readAdminDataFile();
-	getchar();
+	int ret = readAdminDataFile();
+	if (ret == -1 || ret == 0) {
+		cout << "管理员配置文件不存在或者没有管理员记录! 请先创建管理员! 任意按键继续\n" << endl;
+		getchar();
+		createAdmin();
+	}
 	fflush(stdin);
 	
 	string name;
@@ -1208,14 +1256,13 @@ bool systemConfigLogin()
 		printf("输入管理员名字:");
 		cin >> name;
 
-		for(auto &it : g_adminVec)
+		auto it = std::find_if(g_adminVec.begin(), g_adminVec.end(), [&name](const AdminInfo& admin) {
+			return admin._adminName == name;
+		});
+		if (it != g_adminVec.end())
 		{
-			if (it._adminName == name)
-			{
-				pAdminInfo = &it;
-				g_pCurrentLoginedAdmin = pAdminInfo;
-				break;
-			}
+			pAdminInfo = &(*it);
+			break;
 		}
 		
 		printf("错误 该管理员不存在\n");
@@ -1432,12 +1479,13 @@ void printSystemConfigMenu()
 		printf("\t\t\t\t4.清除用户信息文件\n");
 		printf("\t\t\t\t5.显示当前所有用户\n");
 		printf("\t\t\t\t6.删除指定名字用户\n");
-		printf("\t\t\t\t7.返回登录\n");
+		printf("\t\t\t\t7.返回\n");
 		printf("\t\t\t******************************************\n");
 		printf("\t\t\t******************************************\n");
 		printf("\t\t\t请输入你的选择:");
 		
 		int opt = 0;
+		cin >> opt;
 		switch (opt) {
 		case 1:
 			printAdminList();
@@ -1471,54 +1519,10 @@ void printSystemConfigMenu()
 			fflush(stdin);
 			getchar();	
 		}
-
-		/*
-		if (choice==1)
-		{
-			print_admin_list();
-		}
-		else if (choice==2)
-		{
-			create_admin_wizard();
-		}
-		else if (choice==3)
-		{
-			clearScreen();
-			printf("警告! 这将丢失所有的书籍信息配置文件包括已经保存的书籍!");
-			getchar();
-			del_book_config();
-		}
-		else if (choice==4)
-		{
-			clearScreen();
-			printf("警告! 这将丢失所有的用户信息配置文件包括已经保存的书籍!");
-			getchar();
-			del_user_config();
-		}
-		else if (choice==5)
-		{
-			print_user_list();
-		}
-		else if(choice==6)
-		{
-			delete_user_by_name();
-		}
-		else if(choice==7)
-		{
-			print_system_menu();
-		}
-		else
-		{
-			printf("输入错误! 任意按键重新输入!");
-			fflush(stdin);
-			getchar();
-			print_system_config_menu();
-		}
-		*/
 	}
 }
 
-void printSystemMenu(void)
+void printLoginMenu(void)
 {
 	while (1) {
 		clearScreen();
@@ -1548,13 +1552,12 @@ void printSystemMenu(void)
 			case 2:
 				if (userLogin())
 				{
-					print_user_menu();
+					printUserMenu();
 				}
 				break;
 			case 3:
 				clearScreen();
 				printf("你将访问系统设置菜单! 为了安全 需要验证你的管理员身份!\n");
-				getchar();
 				if (systemConfigLogin())
 				{
 					printSystemConfigMenu();
@@ -1579,7 +1582,13 @@ void printSystemMenu(void)
 
 int main(int argc, char const *argv[])
 {
-	printSystemMenu();
+	if (!checkAdminDataFile()) {
+		cout << "检测到系统中没有管理员账号, 需要创建第一个管理员账号!\n";
+		createAdmin();
+		cout << "管理员账号创建成功! 任意按键继续\n";
+	}
+
+	printLoginMenu();
 
 	return 0;
 }
