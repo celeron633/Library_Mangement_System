@@ -3,6 +3,15 @@
 #include <iomanip>
 #include <sstream>
 
+#ifdef _WIN32
+    #include <windows.h>
+    #include <conio.h>
+#else
+    #include <termios.h>
+    #include <unistd.h>
+    #include <sys/types.h>
+#endif
+
 void UIManager::clearScreen() {
 #ifdef _WIN32
     system("cls");
@@ -80,4 +89,87 @@ std::string UIManager::formatWidth(const std::string& str, int width, bool right
         oss << std::left << std::setw(width) << str;
     }
     return oss.str();
+}
+
+std::string UIManager::getHiddenInput(const std::string& prompt) {
+    if (!prompt.empty()) {
+        std::cout << "    " << prompt << ": ";
+    }
+    std::cout.flush();
+
+    std::string password;
+
+#ifdef _WIN32
+    // Windows 实现
+    HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
+    DWORD mode = 0;
+    GetConsoleMode(hStdin, &mode);
+    
+    // 保存原始模式
+    DWORD originalMode = mode;
+    
+    // 禁用回显输入
+    mode &= ~ENABLE_ECHO_INPUT;
+    SetConsoleMode(hStdin, mode);
+
+    char ch;
+    while (std::cin.get(ch)) {
+        if (ch == '\n' || ch == '\r') {
+            std::cout << "\n";
+            break;
+        }
+        if (ch == '\b') {  // 退格键
+            if (!password.empty()) {
+                password.pop_back();
+                std::cout << "\b \b";
+                std::cout.flush();
+            }
+        } else if (ch >= 32 && ch < 127) {  // 可打印字符
+            password += ch;
+            std::cout << "*";
+            std::cout.flush();
+        }
+    }
+
+    // 恢复原始模式
+    SetConsoleMode(hStdin, originalMode);
+
+#else
+    // Linux/Unix/macOS 实现
+    termios oldt, newt;
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    
+    // 禁用回显
+    newt.c_lflag &= ~(ECHO | ICANON);
+    newt.c_cc[VMIN] = 1;
+    newt.c_cc[VTIME] = 0;
+    
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+
+    char ch;
+    while (read(STDIN_FILENO, &ch, 1) == 1) {
+        if (ch == '\n' || ch == '\r') {
+            std::cout << "\n";
+            break;
+        }
+        if (ch == '\b' || ch == 127) {  // 退格或删除键
+            if (!password.empty()) {
+                password.pop_back();
+                std::cout << "\b \b";
+                std::cout.flush();
+            }
+        } else if (ch >= 32 && ch < 127) {  // 可打印字符
+            password += ch;
+            std::cout << "*";
+            std::cout.flush();
+        }
+    }
+
+    // 恢复原始设置
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+
+#endif
+
+    return password;
 }

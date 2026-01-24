@@ -54,7 +54,7 @@ private:
 
     // Helper methods
     bool verifyPassword(const std::string& inputPassword, const std::string& correctPassword);
-    std::string getPasswordInput();
+    std::string getPasswordInput(const std::string& prompt = "请输入密码");
     int getIntInput(int min, int max);
 
 public:

@@ -38,4 +38,7 @@ public:
 
     // 格式化数字为固定宽度
     static std::string formatWidth(const std::string& str, int width, bool rightAlign = false);
+
+    // 获取隐藏的密码输入（显示*号）
+    static std::string getHiddenInput(const std::string& prompt = "");
 };

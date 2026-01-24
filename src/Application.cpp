@@ -80,7 +80,7 @@ void Application::adminLogin() {
         return;
     }
 
-    std::string password = getPasswordInput();
+    std::string password = getPasswordInput("请输入密码");
     if (verifyPassword(password, m_currentAdmin->getPassword())) {
         UIManager::printSuccess("登录成功！");
         UIManager::pause();
@@ -108,11 +108,8 @@ void Application::adminCreateAccount() {
         }
 
         std::string password, confirmPassword;
-        UIManager::printInfo("请输入密码：");
-        std::getline(std::cin, password);
-
-        UIManager::printInfo("请确认密码：");
-        std::getline(std::cin, confirmPassword);
+        password = UIManager::getHiddenInput("请输入密码");
+        confirmPassword = UIManager::getHiddenInput("请确认密码");
 
         if (password != confirmPassword) {
             UIManager::printError("两次输入的密码不一致");
@@ -446,7 +443,7 @@ void Application::userLogin() {
         return;
     }
 
-    std::string password = getPasswordInput();
+    std::string password = getPasswordInput("请输入密码");
     if (verifyPassword(password, m_currentUser->getPassword())) {
         UIManager::printSuccess("登录成功！");
         UIManager::pause();
@@ -474,11 +471,8 @@ void Application::userRegister() {
     }
 
     std::string password, confirmPassword;
-    UIManager::printInfo("请输入密码：");
-    std::getline(std::cin, password);
-
-    UIManager::printInfo("请确认密码：");
-    std::getline(std::cin, confirmPassword);
+    password = UIManager::getHiddenInput("请输入密码");
+    confirmPassword = UIManager::getHiddenInput("请确认密码");
 
     if (password != confirmPassword) {
         UIManager::printError("两次输入的密码不一致");
@@ -611,7 +605,7 @@ void Application::userApplyVIP() {
     }
 
     UIManager::printInfo("需要确认身份，请输入密码");
-    std::string password = getPasswordInput();
+    std::string password = getPasswordInput("请输入密码");
 
     if (verifyPassword(password, m_currentUser->getPassword())) {
         m_currentUser->setVIP(true);
@@ -627,7 +621,7 @@ void Application::userChargeBalance() {
     UIManager::printTitle("充值余额");
 
     UIManager::printInfo("需要确认身份，请输入密码");
-    std::string password = getPasswordInput();
+    std::string password = getPasswordInput("请输入密码");
 
     if (!verifyPassword(password, m_currentUser->getPassword())) {
         UIManager::printError("密码错误");
@@ -690,7 +684,7 @@ void Application::systemConfig() {
         return;
     }
 
-    std::string password = getPasswordInput();
+    std::string password = getPasswordInput("请输入密码");
     if (!verifyPassword(password, m_currentAdmin->getPassword())) {
         UIManager::printError("密码错误");
         UIManager::pause();
@@ -837,11 +831,8 @@ bool Application::verifyPassword(const std::string& inputPassword, const std::st
     return inputPassword == correctPassword;
 }
 
-std::string Application::getPasswordInput() {
-    std::string password;
-    std::cout << "    请输入密码: ";
-    std::getline(std::cin, password);
-    return password;
+std::string Application::getPasswordInput(const std::string& prompt) {
+    return UIManager::getHiddenInput(prompt);
 }
 
 int Application::getIntInput(int min, int max) {
