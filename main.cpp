@@ -700,6 +700,7 @@ bool adminLogin(void)
 		if (it != g_adminVec.end())
 		{
 			pAdminInfo = &(*it);
+			break;
 		}
 
 		printf("错误 该管理员不存在\n");
@@ -1063,7 +1064,7 @@ void adminBookMenu()
 		printf("\t\t\t\t2.图书出库(按ID)\n");
 		printf("\t\t\t\t3.修改对应ID图书库存\n");
 		printf("\t\t\t\t4.修改对应ID图书信息\n");
-		printf("\t\t\t\t5.返回管理员菜单\n");
+		printf("\t\t\t\t5.返回\n");
 		printf("\t\t\t******************************************\n");
 		printf("\t\t\t******************************************\n");
 		printf("\t\t\t请输入你的选择:");
@@ -1105,7 +1106,7 @@ void adminBookInfoLookup()
 		printf("\t\t\t\t1.按照图书单价排序显示\n");
 		printf("\t\t\t\t2.计算所有图书总价\n");
 		printf("\t\t\t\t3.按照ID查找图书简介\n");
-		printf("\t\t\t\t4.返回管理员菜单\n");
+		printf("\t\t\t\t4.返回\n");
 		printf("\t\t\t******************************************\n");
 		printf("\t\t\t******************************************\n");
 		printf("\t\t\t请输入你的选择:");
@@ -1193,7 +1194,7 @@ void printUserMenu()
 		printf("\t\t\t\t4.购买指定ID的书籍\n");
 		printf("\t\t\t\t5.查看本次购物清单\n");
 		printf("\t\t\t\t6.退出系统\n");
-		printf("\t\t\t\t7.返回登录\n");
+		printf("\t\t\t\t7.返回\n");
 		printf("\t\t\t******************************************\n");
 		printf("\t\t\t******************************************\n");
 		printf("\t\t\t当前用户:%s 余额:%.2f 会员: %d\n", g_pCurrentLoginedUser->_userName.c_str(), g_pCurrentLoginedUser->_balance, g_pCurrentLoginedUser->_isVIP);
@@ -1492,6 +1493,7 @@ void printSystemConfigMenu()
 		switch (opt) {
 		case 1:
 			printAdminList();
+			getchar();
 			break;
 		case 2:
 			createAdmin();
@@ -1510,6 +1512,7 @@ void printSystemConfigMenu()
 			break;
 		case 5:
 			printUserList();
+			getchar();
 			break;
 		case 6:
 			deleteUserByName();
