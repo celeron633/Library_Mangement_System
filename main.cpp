@@ -62,6 +62,11 @@ struct AdminInfo
 {
 	string _adminName;
 	string _adminPassword;
+
+	AdminInfo() : _adminName(""), _adminPassword("")
+	{
+		
+	}
 };
 vector<AdminInfo> g_adminVec;
 AdminInfo *g_pCurrentLoginedAdmin = nullptr;
@@ -73,10 +78,9 @@ struct UserInfo
 	double 	_balance;
 	bool 	_isVIP;
 
-	UserInfo()
+	UserInfo() : _userName(""), _userPassword(""), _balance(0.0), _isVIP(false)
 	{
-		_isVIP = false;
-		_balance = 0;
+		
 	}
 };
 vector<UserInfo> g_userVec;
@@ -91,10 +95,9 @@ struct BookInfo
 	double 	_bookPrice;
 	int 	_bookCount;
 
-	BookInfo()
+	BookInfo() : _bookId(""), _bookName(""), _bookAuthor(""), _bookIntroduce(""), _bookPrice(0.0), _bookCount(0)
 	{
-		_bookPrice = 0.0;
-		_bookCount = 0;	
+		
 	}
 };
 vector<BookInfo> g_bookVec;
@@ -104,9 +107,9 @@ struct ShopList
 	BookInfo 	_bookInfo;
 	int 		_buyCount;
 
-	ShopList()
+	ShopList() : _buyCount(0), _bookInfo()
 	{
-		_buyCount = 0;
+		
 	}
 };
 vector<ShopList> g_shopListVec;
