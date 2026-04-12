@@ -165,19 +165,11 @@ double showChargeBalanceForm() {
 
     auto container = Container::Vertical({input_amount, buttons});
 
+    // Allow pressing Enter in the input field to trigger the OK button
     container |= CatchEvent([&](Event event) {
         if (event == Event::Return && input_amount->Focused()) {
-            // Trigger OK button logic
-            try {
-                double amt = std::stod(amount_str);
-                if (amt > 0) {
-                    result = amt;
-                    confirmed = true;
-                    screen.Exit();
-                    return true;
-                }
-            } catch (...) {
-            }
+            btn_ok->OnEvent(Event::Return);
+            return true;
         }
         return false;
     });
