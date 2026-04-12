@@ -8,7 +8,7 @@
 using namespace ftxui;
 
 int showMainMenu() {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     std::vector<std::string> entries = {
         "  管理员登录  ",
@@ -37,7 +37,7 @@ int showMainMenu() {
 }
 
 std::pair<std::string, std::string> showLoginForm(const std::string& title) {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     std::string username, password;
     bool confirmed = false;
@@ -88,7 +88,7 @@ std::pair<std::string, std::string> showLoginForm(const std::string& title) {
 }
 
 RegisterData showRegisterForm() {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     RegisterData data;
 
@@ -127,7 +127,7 @@ RegisterData showRegisterForm() {
 }
 
 std::string showPasswordInputForm(const std::string& title) {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     std::string password;
     bool confirmed = false;

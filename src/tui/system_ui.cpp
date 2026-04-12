@@ -12,7 +12,7 @@
 using namespace ftxui;
 
 int showSystemConfigMenu() {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     std::vector<std::string> entries = {
         "  显示管理员列表  ",
@@ -43,7 +43,7 @@ int showSystemConfigMenu() {
 }
 
 std::pair<std::string, std::string> showAdminAuthForm() {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     std::string admin_name, password;
     bool confirmed = false;
@@ -93,7 +93,7 @@ std::pair<std::string, std::string> showAdminAuthForm() {
 }
 
 AdminCreateData showCreateAdminForm() {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     AdminCreateData data;
     std::string error_msg;
@@ -147,7 +147,7 @@ AdminCreateData showCreateAdminForm() {
 }
 
 void showAdminListTable(const std::vector<Admin>& admins) {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     auto btn_back = Button("  返回  ", screen.ExitLoopClosure());
 
@@ -184,7 +184,7 @@ void showAdminListTable(const std::vector<Admin>& admins) {
 }
 
 void showUserListTable(const std::vector<User>& users) {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     auto btn_back = Button("  返回  ", screen.ExitLoopClosure());
 
@@ -226,7 +226,7 @@ void showUserListTable(const std::vector<User>& users) {
 }
 
 std::string showDeleteUserForm() {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     std::string username;
     bool confirmed = false;

@@ -12,7 +12,7 @@
 using namespace ftxui;
 
 int showUserMenu(const std::string& username, double balance, bool isVIP) {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     std::ostringstream bal_oss;
     bal_oss << std::fixed << std::setprecision(2) << balance;
@@ -55,7 +55,7 @@ int showUserMenu(const std::string& username, double balance, bool isVIP) {
 }
 
 BuyBookData showBuyBookForm(const std::vector<Book>& books) {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     BuyBookData data;
     std::string qty_str;
@@ -136,7 +136,7 @@ BuyBookData showBuyBookForm(const std::vector<Book>& books) {
 }
 
 double showChargeBalanceForm() {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     std::string amount_str;
     std::string error_msg;
@@ -197,7 +197,7 @@ double showChargeBalanceForm() {
 }
 
 void showCartView(const ShoppingCart& cart, bool isVIP) {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     auto btn_back = Button("  返回  ", screen.ExitLoopClosure());
 

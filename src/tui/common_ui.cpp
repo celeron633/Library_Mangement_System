@@ -8,7 +8,7 @@ using namespace ftxui;
 
 void showMessage(const std::string& title, const std::string& message,
                  MessageType type) {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     Color msg_color;
     std::string prefix;
@@ -50,7 +50,7 @@ void showMessage(const std::string& title, const std::string& message,
 }
 
 bool showConfirmDialog(const std::string& message) {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     bool confirmed = false;
 

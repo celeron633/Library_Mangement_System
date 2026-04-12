@@ -12,7 +12,7 @@
 using namespace ftxui;
 
 int showAdminMenu() {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     std::vector<std::string> entries = {
         "  显示所有书籍  ",
@@ -40,7 +40,7 @@ int showAdminMenu() {
 }
 
 int showAdminBookOperationsMenu() {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     std::vector<std::string> entries = {
         "  添加书籍      ",
@@ -69,7 +69,7 @@ int showAdminBookOperationsMenu() {
 }
 
 int showAdminBookInquiryMenu() {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     std::vector<std::string> entries = {
         "  按价格排序显示    ",
@@ -97,7 +97,7 @@ int showAdminBookInquiryMenu() {
 }
 
 AddBookData showAddBookForm() {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     AddBookData data;
     std::string price_str, stock_str;
@@ -157,7 +157,7 @@ AddBookData showAddBookForm() {
 
 std::string showBookIdInputForm(const std::string& title,
                                 const std::string& label) {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     std::string book_id;
     bool confirmed = false;
@@ -200,7 +200,7 @@ std::string showBookIdInputForm(const std::string& title,
 }
 
 EditBookData showEditBookForm(const Book& book) {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     EditBookData data;
     data.name = book.getName();
@@ -266,7 +266,7 @@ EditBookData showEditBookForm(const Book& book) {
 }
 
 std::pair<std::string, int> showEditStockForm() {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     std::string book_id;
     std::string stock_str;
@@ -319,7 +319,7 @@ std::pair<std::string, int> showEditStockForm() {
 }
 
 void showBooksTable(const std::vector<Book>& books, const std::string& title) {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     auto btn_back = Button("  返回  ", screen.ExitLoopClosure());
 
@@ -369,7 +369,7 @@ void showBooksTable(const std::vector<Book>& books, const std::string& title) {
 }
 
 void showBookIntroDialog(const Book& book) {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     auto btn_ok = Button("  确认  ", screen.ExitLoopClosure());
 
@@ -392,7 +392,7 @@ void showBookIntroDialog(const Book& book) {
 }
 
 void showTotalPriceDialog(double total) {
-    auto screen = ScreenInteractive::TerminalOutput();
+    auto screen = ScreenInteractive::Fullscreen();
 
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(2) << total;
