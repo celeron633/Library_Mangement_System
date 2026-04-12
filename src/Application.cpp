@@ -1,31 +1,28 @@
 #include "Application.h"
-#include "utils/UIManager.h"
-#include "ui/MenuUI.h"
-#include <iostream>
-#include <iomanip>
-#include <limits>
+
+#include "tui/admin_ui.h"
+#include "tui/common_ui.h"
+#include "tui/login_ui.h"
+#include "tui/system_ui.h"
+#include "tui/user_ui.h"
+
 #include <fstream>
 
-Application::Application() 
+Application::Application()
     : m_userManager(std::make_unique<UserManager>()),
       m_adminManager(std::make_unique<AdminManager>()),
       m_bookManager(std::make_unique<BookManager>()) {
 }
 
 void Application::run() {
-    // 初始化数据
     m_adminManager->loadFromFile();
     m_userManager->loadFromFile();
     m_bookManager->loadFromFile();
 
-    // 检查管理员是否存在
     if (m_adminManager->getAdminCount() == 0) {
-        UIManager::printTitle("欢迎使用图书馆管理系统");
-        UIManager::printInfo("系统中没有管理员账号，需要创建第一个管理员");
-        UIManager::pause();
+        showMessage("欢迎使用图书馆管理系统",
+                    "系统中没有管理员账号，需要创建第一个管理员");
         adminCreateAccount();
-        UIManager::printSuccess("管理员账号创建成功！");
-        UIManager::pause();
     }
 
     showLoginMenu();
@@ -33,819 +30,484 @@ void Application::run() {
 
 void Application::showLoginMenu() {
     while (true) {
-        UIManager::printTitle("图书馆管理系统 - 登录");
-        UIManager::printMenuItem(1, "管理员登录");
-        UIManager::printMenuItem(2, "用户登录");
-        UIManager::printMenuItem(3, "用户注册");
-        UIManager::printMenuItem(4, "系统设置");
-        UIManager::printMenuItem(5, "退出系统");
-        UIManager::printMenuEnd();
-
-        int choice = UIManager::getMenuChoice();
+        // 0=admin login, 1=user login, 2=register, 3=system config, 4=exit
+        int choice = showMainMenu();
         switch (choice) {
-            case 1:
+            case 0:
                 adminLogin();
                 break;
-            case 2:
+            case 1:
                 userLogin();
                 break;
-            case 3:
+            case 2:
                 userRegister();
                 break;
-            case 4:
+            case 3:
                 systemConfig();
                 break;
-            case 5:
-                UIManager::printCenter("谢谢你的使用，再见！");
-                exit(0);
+            case 4:
+                showMessage("", "谢谢你的使用，再见！");
+                return;
             default:
-                UIManager::printError("输入错误，请重新选择");
-                UIManager::pause();
+                break;
         }
     }
 }
 
 void Application::adminLogin() {
-    UIManager::printTitle("管理员登录");
-
-    std::string name;
-    UIManager::printInfo("请输入管理员名字:");
-    std::cin >> name;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    auto [name, password] = showLoginForm("管理员登录");
+    if (name.empty()) return;
 
     m_currentAdmin = m_adminManager->findAdminByName(name);
     if (!m_currentAdmin) {
-        UIManager::printError("该管理员不存在");
-        UIManager::pause();
+        showMessage("错误", "该管理员不存在", MessageType::ERROR_MSG);
         return;
     }
 
-    std::string password = getPasswordInput("请输入密码");
     if (verifyPassword(password, m_currentAdmin->getPassword())) {
-        UIManager::printSuccess("登录成功！");
-        UIManager::pause();
+        showMessage("成功", "登录成功！", MessageType::SUCCESS);
         adminMenu();
     } else {
-        UIManager::printError("密码错误");
-        UIManager::pause();
+        showMessage("错误", "密码错误", MessageType::ERROR_MSG);
     }
 
     m_currentAdmin = nullptr;
 }
 
 void Application::adminCreateAccount() {
-    UIManager::printTitle("创建管理员账号");
-
     while (true) {
-        std::string name;
-        UIManager::printInfo("请输入管理员名字：");
-        std::cin >> name;
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        AdminCreateData data = showCreateAdminForm();
+        if (!data.confirmed) break;
 
-        if (m_adminManager->adminExists(name)) {
-            UIManager::printError("该管理员已存在");
+        if (m_adminManager->adminExists(data.name)) {
+            showMessage("错误", "该管理员已存在", MessageType::ERROR_MSG);
             continue;
         }
 
-        std::string password, confirmPassword;
-        password = UIManager::getHiddenInput("请输入密码");
-        confirmPassword = UIManager::getHiddenInput("请确认密码");
-
-        if (password != confirmPassword) {
-            UIManager::printError("两次输入的密码不一致");
+        if (data.password != data.confirmPassword) {
+            showMessage("错误", "两次输入的密码不一致", MessageType::ERROR_MSG);
             continue;
         }
 
-        m_adminManager->addAdmin(Admin(name, password));
+        m_adminManager->addAdmin(Admin(data.name, data.password));
         m_adminManager->saveToFile();
-        UIManager::printSuccess("管理员创建成功！");
+        showMessage("成功", "管理员创建成功！", MessageType::SUCCESS);
 
-        std::string choice;
-        UIManager::printInfo("继续创建管理员？(y/n):");
-        std::cin >> choice;
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-        if (choice == "n" || choice == "no") {
-            break;
-        }
+        if (!showConfirmDialog("继续创建管理员？")) break;
     }
 }
 
 void Application::adminMenu() {
     while (true) {
-        UIManager::printTitle("管理员菜单");
-        UIManager::printMenuItem(1, "显示所有书籍");
-        UIManager::printMenuItem(2, "书籍操作");
-        UIManager::printMenuItem(3, "书籍查询");
-        UIManager::printMenuItem(4, "返回");
-        UIManager::printMenuEnd();
-
-        int choice = UIManager::getMenuChoice();
+        // 0=all books, 1=operations, 2=inquiry, 3=back
+        int choice = showAdminMenu();
         switch (choice) {
-            case 1:
+            case 0:
                 showAllBooksUI();
                 break;
-            case 2:
+            case 1:
                 adminBookOperations();
                 break;
-            case 3:
+            case 2:
                 adminBookInquiry();
                 break;
-            case 4:
+            case 3:
                 return;
             default:
-                UIManager::printError("输入错误");
-                UIManager::pause();
+                break;
         }
     }
 }
 
 void Application::adminBookOperations() {
     while (true) {
-        UIManager::printTitle("书籍操作菜单");
-        UIManager::printMenuItem(1, "添加书籍");
-        UIManager::printMenuItem(2, "删除书籍");
-        UIManager::printMenuItem(3, "编辑书籍信息");
-        UIManager::printMenuItem(4, "编辑库存");
-        UIManager::printMenuItem(5, "返回");
-        UIManager::printMenuEnd();
-
-        int choice = UIManager::getMenuChoice();
+        // 0=add, 1=delete, 2=edit info, 3=edit stock, 4=back
+        int choice = showAdminBookOperationsMenu();
         switch (choice) {
-            case 1:
+            case 0:
                 addBookUI();
                 break;
-            case 2:
+            case 1:
                 deleteBookUI();
                 break;
-            case 3:
+            case 2:
                 editBookUI();
                 break;
-            case 4:
+            case 3:
                 editBookStockUI();
                 break;
-            case 5:
+            case 4:
                 return;
             default:
-                UIManager::printError("输入错误");
-                UIManager::pause();
+                break;
         }
     }
 }
 
 void Application::adminBookInquiry() {
     while (true) {
-        UIManager::printTitle("书籍查询菜单");
-        UIManager::printMenuItem(1, "按价格排序显示");
-        UIManager::printMenuItem(2, "计算所有图书总价");
-        UIManager::printMenuItem(3, "查询书籍简介");
-        UIManager::printMenuItem(4, "返回");
-        UIManager::printMenuEnd();
-
-        int choice = UIManager::getMenuChoice();
+        // 0=sort by price, 1=total price, 2=query intro, 3=back
+        int choice = showAdminBookInquiryMenu();
         switch (choice) {
-            case 1:
+            case 0:
                 sortBooksUI();
                 break;
-            case 2:
+            case 1:
                 calculateTotalPriceUI();
                 break;
-            case 3:
+            case 2:
                 queryBookByIdUI();
                 break;
-            case 4:
+            case 3:
                 return;
             default:
-                UIManager::printError("输入错误");
-                UIManager::pause();
+                break;
         }
     }
 }
 
 void Application::addBookUI() {
-    UIManager::printTitle("添加书籍");
+    AddBookData data = showAddBookForm();
+    if (!data.confirmed) return;
 
-    std::string id, name, author, intro;
-    double price;
-    int stock;
-
-    std::cout << "    请输入书籍编号: ";
-    std::cin >> id;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-    if (m_bookManager->bookExists(id)) {
-        UIManager::printError("该编号的书籍已存在");
-        UIManager::pause();
+    if (m_bookManager->bookExists(data.id)) {
+        showMessage("错误", "该编号的书籍已存在", MessageType::ERROR_MSG);
         return;
     }
 
-    std::cout << "    请输入书籍名称: ";
-    std::getline(std::cin, name);
-
-    if (m_bookManager->bookNameExists(name)) {
-        UIManager::printError("该书籍已存在");
-        UIManager::pause();
+    if (m_bookManager->bookNameExists(data.name)) {
+        showMessage("错误", "该书籍名称已存在", MessageType::ERROR_MSG);
         return;
     }
 
-    std::cout << "    请输入作者: ";
-    std::getline(std::cin, author);
-
-    std::cout << "    请输入简介: ";
-    std::getline(std::cin, intro);
-
-    std::cout << "    请输入价格: ";
-    std::cin >> price;
-
-    std::cout << "    请输入库存: ";
-    std::cin >> stock;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-    m_bookManager->addBook(Book(id, name, author, intro, price, stock));
+    m_bookManager->addBook(
+        Book(data.id, data.name, data.author, data.intro, data.price, data.stock));
     m_bookManager->saveToFile();
-    UIManager::printSuccess("书籍添加成功！");
-    UIManager::pause();
+    showMessage("成功", "书籍添加成功！", MessageType::SUCCESS);
 }
 
 void Application::deleteBookUI() {
-    UIManager::printTitle("删除书籍");
-
-    std::string id;
-    std::cout << "    请输入要删除的书籍编号: ";
-    std::cin >> id;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::string id =
+        showBookIdInputForm("删除书籍", "请输入要删除的书籍编号");
+    if (id.empty()) return;
 
     if (m_bookManager->deleteBook(id)) {
         m_bookManager->saveToFile();
-        UIManager::printSuccess("书籍删除成功！");
+        showMessage("成功", "书籍删除成功！", MessageType::SUCCESS);
     } else {
-        UIManager::printError("未找到该书籍");
+        showMessage("错误", "未找到该书籍", MessageType::ERROR_MSG);
     }
-    UIManager::pause();
 }
 
 void Application::editBookUI() {
-    UIManager::printTitle("编辑书籍信息");
-
-    std::string id;
-    std::cout << "    请输入要编辑的书籍编号: ";
-    std::cin >> id;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::string id =
+        showBookIdInputForm("编辑书籍", "请输入要编辑的书籍编号");
+    if (id.empty()) return;
 
     Book* book = m_bookManager->findBookById(id);
     if (!book) {
-        UIManager::printError("未找到该书籍");
-        UIManager::pause();
+        showMessage("错误", "未找到该书籍", MessageType::ERROR_MSG);
         return;
     }
 
-    std::string name, author, intro;
-    double price;
-    int stock;
+    EditBookData data = showEditBookForm(*book);
+    if (!data.confirmed) return;
 
-    std::cout << "    请输入新的书籍名称: ";
-    std::getline(std::cin, name);
-
-    std::cout << "    请输入新的作者: ";
-    std::getline(std::cin, author);
-
-    std::cout << "    请输入新的简介: ";
-    std::getline(std::cin, intro);
-
-    std::cout << "    请输入新的价格: ";
-    std::cin >> price;
-
-    std::cout << "    请输入新的库存: ";
-    std::cin >> stock;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-    book->setName(name);
-    book->setAuthor(author);
-    book->setIntroduction(intro);
-    book->setPrice(price);
-    book->setStock(stock);
+    book->setName(data.name);
+    book->setAuthor(data.author);
+    book->setIntroduction(data.intro);
+    book->setPrice(data.price);
+    book->setStock(data.stock);
 
     m_bookManager->saveToFile();
-    UIManager::printSuccess("书籍编辑成功！");
-    UIManager::pause();
+    showMessage("成功", "书籍编辑成功！", MessageType::SUCCESS);
 }
 
 void Application::editBookStockUI() {
-    UIManager::printTitle("编辑库存");
-
-    std::string id;
-    std::cout << "    请输入要编辑的书籍编号: ";
-    std::cin >> id;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    auto [id, newStock] = showEditStockForm();
+    if (id.empty()) return;
 
     Book* book = m_bookManager->findBookById(id);
     if (!book) {
-        UIManager::printError("未找到该书籍");
-        UIManager::pause();
+        showMessage("错误", "未找到该书籍", MessageType::ERROR_MSG);
         return;
     }
-
-    int newStock;
-    std::cout << "    请输入新的库存数量: ";
-    std::cin >> newStock;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
     book->setStock(newStock);
     m_bookManager->saveToFile();
-    UIManager::printSuccess("库存编辑成功！");
-    UIManager::pause();
+    showMessage("成功", "库存编辑成功！", MessageType::SUCCESS);
 }
 
 void Application::queryBookByIdUI() {
-    UIManager::printTitle("查询书籍简介");
-
-    std::string id;
-    std::cout << "    请输入书籍编号: ";
-    std::cin >> id;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::string id =
+        showBookIdInputForm("查询书籍简介", "请输入书籍编号");
+    if (id.empty()) return;
 
     const Book* book = m_bookManager->findBookByIdConst(id);
     if (!book) {
-        UIManager::printError("未找到该书籍");
-        UIManager::pause();
+        showMessage("错误", "未找到该书籍", MessageType::ERROR_MSG);
         return;
     }
 
-    UIManager::printSeparator();
-    std::cout << "    书籍简介: " << book->getIntroduction() << "\n";
-    UIManager::printSeparator();
-    UIManager::pause();
+    showBookIntroDialog(*book);
 }
 
 void Application::showAllBooksUI() {
-    UIManager::printTitle("所有书籍");
-
-    if (m_bookManager->getBookCount() == 0) {
-        UIManager::printInfo("暂无书籍");
-        UIManager::pause();
-        return;
-    }
-
-    MenuUI::printBookTableHeader();
-    for (const auto& book : m_bookManager->getAllBooks()) {
-        MenuUI::printBookRow(book.getId(), book.getName(), book.getAuthor(),
-                           book.getIntroduction(), book.getPrice(), book.getStock());
-    }
-    std::cout << "\n";
-    UIManager::pause();
+    showBooksTable(m_bookManager->getAllBooks(), "所有书籍");
 }
 
 void Application::sortBooksUI() {
-    UIManager::printTitle("按价格排序的书籍");
-
-    if (m_bookManager->getBookCount() == 0) {
-        UIManager::printInfo("暂无书籍");
-        UIManager::pause();
-        return;
-    }
-
     m_bookManager->sortByPrice();
-    MenuUI::printBookTableHeader();
-    for (const auto& book : m_bookManager->getAllBooks()) {
-        MenuUI::printBookRow(book.getId(), book.getName(), book.getAuthor(),
-                           book.getIntroduction(), book.getPrice(), book.getStock());
-    }
-    std::cout << "\n";
-    UIManager::pause();
+    showBooksTable(m_bookManager->getAllBooks(), "按价格排序的书籍");
 }
 
 void Application::calculateTotalPriceUI() {
-    UIManager::printTitle("书籍总价计算");
-
     if (m_bookManager->getBookCount() == 0) {
-        UIManager::printInfo("暂无书籍");
-        UIManager::pause();
+        showMessage("提示", "暂无书籍", MessageType::INFO);
         return;
     }
-
-    double totalPrice = m_bookManager->getTotalPrice();
-    UIManager::printInfo("所有书籍总价: ¥" + std::to_string(totalPrice));
-    UIManager::pause();
+    showTotalPriceDialog(m_bookManager->getTotalPrice());
 }
 
 void Application::userLogin() {
-    UIManager::printTitle("用户登录");
-
-    std::string name;
-    UIManager::printInfo("请输入用户名:");
-    std::cin >> name;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    auto [name, password] = showLoginForm("用户登录");
+    if (name.empty()) return;
 
     m_currentUser = m_userManager->findUserByName(name);
     if (!m_currentUser) {
-        UIManager::printError("该用户不存在");
-        UIManager::pause();
+        showMessage("错误", "该用户不存在", MessageType::ERROR_MSG);
         return;
     }
 
-    std::string password = getPasswordInput("请输入密码");
     if (verifyPassword(password, m_currentUser->getPassword())) {
-        UIManager::printSuccess("登录成功！");
-        UIManager::pause();
+        showMessage("成功", "登录成功！", MessageType::SUCCESS);
         userMenu();
     } else {
-        UIManager::printError("密码错误");
-        UIManager::pause();
+        showMessage("错误", "密码错误", MessageType::ERROR_MSG);
     }
 
     m_currentUser = nullptr;
 }
 
 void Application::userRegister() {
-    UIManager::printTitle("用户注册");
+    RegisterData data = showRegisterForm();
+    if (!data.confirmed || data.username.empty()) return;
 
-    std::string name;
-    UIManager::printInfo("请输入用户名：");
-    std::cin >> name;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-    if (m_userManager->userExists(name)) {
-        UIManager::printError("该用户已存在");
-        UIManager::pause();
+    if (m_userManager->userExists(data.username)) {
+        showMessage("错误", "该用户已存在", MessageType::ERROR_MSG);
         return;
     }
 
-    std::string password, confirmPassword;
-    password = UIManager::getHiddenInput("请输入密码");
-    confirmPassword = UIManager::getHiddenInput("请确认密码");
-
-    if (password != confirmPassword) {
-        UIManager::printError("两次输入的密码不一致");
-        UIManager::pause();
+    if (data.password != data.confirmPassword) {
+        showMessage("错误", "两次输入的密码不一致", MessageType::ERROR_MSG);
         return;
     }
 
-    m_userManager->addUser(User(name, password, 0.0, false));
+    m_userManager->addUser(User(data.username, data.password, 0.0, false));
     m_userManager->saveToFile();
-    UIManager::printSuccess("注册成功！");
-    UIManager::pause();
+    showMessage("成功", "注册成功！", MessageType::SUCCESS);
 }
 
 void Application::userMenu() {
+    m_cart.clear();
     while (true) {
-        UIManager::printTitle("用户菜单");
-        MenuUI::printUserCard(m_currentUser->getName(), m_currentUser->getBalance(), 
-                            m_currentUser->isVIP());
-
-        UIManager::printMenuItem(1, "浏览书籍");
-        UIManager::printMenuItem(2, "购买书籍");
-        UIManager::printMenuItem(3, "申请VIP");
-        UIManager::printMenuItem(4, "充值余额");
-        UIManager::printMenuItem(5, "查看购物车");
-        UIManager::printMenuItem(6, "返回");
-        UIManager::printMenuEnd();
-
-        int choice = UIManager::getMenuChoice();
+        // 0=view books, 1=buy, 2=VIP, 3=charge, 4=cart, 5=back
+        int choice = showUserMenu(m_currentUser->getName(),
+                                  m_currentUser->getBalance(),
+                                  m_currentUser->isVIP());
         switch (choice) {
-            case 1:
+            case 0:
                 userViewBooks();
                 break;
-            case 2:
+            case 1:
                 userBuyBook();
                 break;
-            case 3:
+            case 2:
                 userApplyVIP();
                 break;
-            case 4:
+            case 3:
                 userChargeBalance();
                 break;
-            case 5:
+            case 4:
                 userViewCart();
                 break;
-            case 6:
+            case 5:
                 return;
             default:
-                UIManager::printError("输入错误");
-                UIManager::pause();
+                break;
         }
     }
 }
 
 void Application::userViewBooks() {
-    UIManager::printTitle("浏览书籍");
-
-    if (m_bookManager->getBookCount() == 0) {
-        UIManager::printInfo("暂无书籍");
-        UIManager::pause();
-        return;
-    }
-
-    MenuUI::printBookTableHeader();
-    for (const auto& book : m_bookManager->getAllBooks()) {
-        MenuUI::printBookRow(book.getId(), book.getName(), book.getAuthor(),
-                           book.getIntroduction(), book.getPrice(), book.getStock());
-    }
-    std::cout << "\n";
-    UIManager::pause();
+    showBooksTable(m_bookManager->getAllBooks(), "浏览书籍");
 }
 
 void Application::userBuyBook() {
-    UIManager::printTitle("购买书籍");
+    BuyBookData data = showBuyBookForm(m_bookManager->getAllBooks());
+    if (!data.confirmed) return;
 
-    std::string bookId;
-    std::cout << "    请输入要购买的书籍编号: ";
-    std::cin >> bookId;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-    Book* book = m_bookManager->findBookById(bookId);
+    Book* book = m_bookManager->findBookById(data.bookId);
     if (!book) {
-        UIManager::printError("该书籍不存在");
-        UIManager::pause();
+        showMessage("错误", "该书籍不存在", MessageType::ERROR_MSG);
         return;
     }
 
-    int quantity;
-    std::cout << "    请输入购买数量: ";
-    std::cin >> quantity;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-    if (quantity > book->getStock()) {
-        UIManager::printError("库存不足");
-        UIManager::pause();
+    if (data.quantity > book->getStock()) {
+        showMessage("错误", "库存不足", MessageType::ERROR_MSG);
         return;
     }
 
-    double totalPrice = book->getPrice() * quantity;
+    double totalPrice = book->getPrice() * data.quantity;
     if (m_currentUser->isVIP()) {
-        totalPrice *= 0.9;  // VIP 9折
+        totalPrice *= 0.9;
     }
 
     if (m_currentUser->getBalance() < totalPrice) {
-        UIManager::printError("余额不足");
-        UIManager::pause();
+        showMessage("错误", "余额不足", MessageType::ERROR_MSG);
         return;
     }
 
-    book->deductStock(quantity);
+    book->deductStock(data.quantity);
     m_currentUser->deductBalance(totalPrice);
-    m_cart.addItem(*book, quantity);
+    m_cart.addItem(*book, data.quantity);
     m_bookManager->saveToFile();
     m_userManager->saveToFile();
 
-    if (m_currentUser->isVIP()) {
-        UIManager::printSuccess("购买成功！VIP享受9折优惠");
-    } else {
-        UIManager::printSuccess("购买成功！");
-    }
-    UIManager::pause();
+    std::string msg = "购买成功！";
+    if (m_currentUser->isVIP()) msg += "VIP享受9折优惠";
+    showMessage("成功", msg, MessageType::SUCCESS);
 }
 
 void Application::userApplyVIP() {
-    UIManager::printTitle("申请VIP");
-
     if (m_currentUser->isVIP()) {
-        UIManager::printInfo("你已经是VIP用户");
-        UIManager::pause();
+        showMessage("提示", "你已经是VIP用户", MessageType::INFO);
         return;
     }
 
-    UIManager::printInfo("需要确认身份，请输入密码");
-    std::string password = getPasswordInput("请输入密码");
+    std::string password = showPasswordInputForm("申请VIP - 请验证身份");
+    if (password.empty()) return;
 
     if (verifyPassword(password, m_currentUser->getPassword())) {
         m_currentUser->setVIP(true);
         m_userManager->saveToFile();
-        UIManager::printSuccess("恭喜！你已成为VIP用户，可享受9折优惠！");
+        showMessage("成功", "恭喜！你已成为VIP用户，可享受9折优惠！",
+                    MessageType::SUCCESS);
     } else {
-        UIManager::printError("密码错误");
+        showMessage("错误", "密码错误", MessageType::ERROR_MSG);
     }
-    UIManager::pause();
 }
 
 void Application::userChargeBalance() {
-    UIManager::printTitle("充值余额");
-
-    UIManager::printInfo("需要确认身份，请输入密码");
-    std::string password = getPasswordInput("请输入密码");
+    std::string password = showPasswordInputForm("充值余额 - 请验证身份");
+    if (password.empty()) return;
 
     if (!verifyPassword(password, m_currentUser->getPassword())) {
-        UIManager::printError("密码错误");
-        UIManager::pause();
+        showMessage("错误", "密码错误", MessageType::ERROR_MSG);
         return;
     }
 
-    double amount;
-    std::cout << "    请输入充值金额: ";
-    std::cin >> amount;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-    if (amount <= 0) {
-        UIManager::printError("金额必须大于0");
-        UIManager::pause();
-        return;
-    }
+    double amount = showChargeBalanceForm();
+    if (amount <= 0) return;
 
     m_currentUser->addBalance(amount);
     m_userManager->saveToFile();
-    UIManager::printSuccess("充值成功！");
-    UIManager::pause();
+    showMessage("成功", "充值成功！", MessageType::SUCCESS);
 }
 
 void Application::userViewCart() {
-    UIManager::printTitle("购物车");
-
-    if (m_cart.isEmpty()) {
-        UIManager::printInfo("购物车为空");
-        UIManager::pause();
-        return;
-    }
-
-    MenuUI::printCartTableHeader();
-    for (const auto& item : m_cart.getItems()) {
-        MenuUI::printCartRow(item.book.getId(), item.book.getName(),
-                           item.book.getPrice(), item.quantity, item.getSubtotal());
-    }
-
-    std::cout << std::string(55, '-') << "\n";
-    double total = m_currentUser->isVIP() ? m_cart.getTotalPriceWithDiscount(0.9) : m_cart.getTotalPrice();
-    std::cout << std::setw(45) << std::right << "总计: ¥"
-              << std::setw(10) << std::right << std::fixed << std::setprecision(2) << total << "\n";
-    std::cout << "\n";
-    UIManager::pause();
+    showCartView(m_cart, m_currentUser->isVIP());
 }
 
 void Application::systemConfig() {
-    UIManager::printTitle("系统设置");
-    UIManager::printInfo("需要管理员权限，请输入管理员名字");
-    
-    std::string name;
-    std::cin >> name;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    auto [admin_name, password] = showAdminAuthForm();
+    if (admin_name.empty()) return;
 
-    m_currentAdmin = m_adminManager->findAdminByName(name);
+    m_currentAdmin = m_adminManager->findAdminByName(admin_name);
     if (!m_currentAdmin) {
-        UIManager::printError("该管理员不存在");
-        UIManager::pause();
+        showMessage("错误", "该管理员不存在", MessageType::ERROR_MSG);
         return;
     }
 
-    std::string password = getPasswordInput("请输入密码");
     if (!verifyPassword(password, m_currentAdmin->getPassword())) {
-        UIManager::printError("密码错误");
-        UIManager::pause();
+        showMessage("错误", "密码错误", MessageType::ERROR_MSG);
         m_currentAdmin = nullptr;
         return;
     }
 
     while (true) {
-        UIManager::printTitle("系统设置菜单");
-        UIManager::printMenuItem(1, "显示管理员列表");
-        UIManager::printMenuItem(2, "创建新管理员");
-        UIManager::printMenuItem(3, "显示用户列表");
-        UIManager::printMenuItem(4, "删除用户");
-        UIManager::printMenuItem(5, "清除所有书籍数据");
-        UIManager::printMenuItem(6, "清除所有用户数据");
-        UIManager::printMenuItem(7, "返回");
-        UIManager::printMenuEnd();
-
-        int choice = UIManager::getMenuChoice();
+        // 0=admin list, 1=create admin, 2=user list, 3=delete user,
+        // 4=clear books, 5=clear users, 6=back
+        int choice = showSystemConfigMenu();
         switch (choice) {
-            case 1:
+            case 0:
                 showAdminList();
                 break;
-            case 2:
+            case 1:
                 adminCreateAccount();
                 break;
-            case 3:
+            case 2:
                 showUserList();
                 break;
-            case 4:
+            case 3:
                 deleteUserUI();
                 break;
-            case 5:
+            case 4:
                 clearBookData();
                 break;
-            case 6:
+            case 5:
                 clearUserData();
                 break;
-            case 7:
+            case 6:
                 m_currentAdmin = nullptr;
                 return;
             default:
-                UIManager::printError("输入错误");
-                UIManager::pause();
+                break;
         }
     }
 }
 
 void Application::showAdminList() {
-    UIManager::printTitle("管理员列表");
-
-    if (m_adminManager->getAdminCount() == 0) {
-        UIManager::printInfo("暂无管理员");
-        UIManager::pause();
-        return;
-    }
-
-    std::cout << "\n";
-    std::cout << std::setw(20) << std::left << "管理员名称"
-              << std::setw(25) << std::left << "密码"
-              << "\n";
-    std::cout << std::string(45, '-') << "\n";
-
-    for (const auto& admin : m_adminManager->getAllAdmins()) {
-        std::cout << std::setw(20) << std::left << admin.getName()
-                  << std::setw(25) << std::left << admin.getPassword()
-                  << "\n";
-    }
-    std::cout << "\n";
-    UIManager::pause();
+    showAdminListTable(m_adminManager->getAllAdmins());
 }
 
 void Application::showUserList() {
-    UIManager::printTitle("用户列表");
-
-    if (m_userManager->getUserCount() == 0) {
-        UIManager::printInfo("暂无用户");
-        UIManager::pause();
-        return;
-    }
-
-    MenuUI::printUserTableHeader();
-    for (const auto& user : m_userManager->getAllUsers()) {
-        MenuUI::printUserRow(user.getName(), user.getBalance(), user.isVIP());
-    }
-    std::cout << "\n";
-    UIManager::pause();
+    showUserListTable(m_userManager->getAllUsers());
 }
 
 void Application::deleteUserUI() {
-    UIManager::printTitle("删除用户");
-
-    std::string name;
-    std::cout << "    请输入要删除的用户名: ";
-    std::cin >> name;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::string name = showDeleteUserForm();
+    if (name.empty()) return;
 
     if (m_userManager->deleteUser(name)) {
         m_userManager->saveToFile();
-        UIManager::printSuccess("用户删除成功！");
+        showMessage("成功", "用户删除成功！", MessageType::SUCCESS);
     } else {
-        UIManager::printError("未找到该用户");
+        showMessage("错误", "未找到该用户", MessageType::ERROR_MSG);
     }
-    UIManager::pause();
 }
 
 void Application::clearBookData() {
-    UIManager::printTitle("清除书籍数据");
-    UIManager::printWarning("此操作将删除所有书籍信息，是否继续？(y/n)");
-
-    std::string choice;
-    std::cin >> choice;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-    if (choice == "y" || choice == "yes") {
+    if (showConfirmDialog("此操作将删除所有书籍信息，是否继续？")) {
         std::ofstream file("book.dat", std::ios::trunc);
         file.close();
-        UIManager::printSuccess("书籍数据已清除");
+        showMessage("成功", "书籍数据已清除", MessageType::SUCCESS);
     } else {
-        UIManager::printInfo("操作已取消");
+        showMessage("提示", "操作已取消", MessageType::INFO);
     }
-    UIManager::pause();
 }
 
 void Application::clearUserData() {
-    UIManager::printTitle("清除用户数据");
-    UIManager::printWarning("此操作将删除所有用户信息，是否继续？(y/n)");
-
-    std::string choice;
-    std::cin >> choice;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-    if (choice == "y" || choice == "yes") {
+    if (showConfirmDialog("此操作将删除所有用户信息，是否继续？")) {
         std::ofstream file("user.dat", std::ios::trunc);
         file.close();
-        UIManager::printSuccess("用户数据已清除");
+        showMessage("成功", "用户数据已清除", MessageType::SUCCESS);
     } else {
-        UIManager::printInfo("操作已取消");
+        showMessage("提示", "操作已取消", MessageType::INFO);
     }
-    UIManager::pause();
 }
 
-bool Application::verifyPassword(const std::string& inputPassword, const std::string& correctPassword) {
+bool Application::verifyPassword(const std::string& inputPassword,
+                                  const std::string& correctPassword) {
     return inputPassword == correctPassword;
-}
-
-std::string Application::getPasswordInput(const std::string& prompt) {
-    return UIManager::getHiddenInput(prompt);
-}
-
-int Application::getIntInput(int min, int max) {
-    int value;
-    while (true) {
-        std::cin >> value;
-        if (std::cin.fail() || value < min || value > max) {
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-            UIManager::printError("输入无效，请重试");
-            continue;
-        }
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        return value;
-    }
 }
