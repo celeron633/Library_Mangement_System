@@ -1,264 +1,142 @@
-# 快速开始指南
+# 图书馆管理系统
 
-## 📦 重构内容总结
+一个使用 C++17 和 [FTXUI](https://github.com/ArthurSonzogni/FTXUI) 编写的终端图书馆管理系统。项目提供管理员、普通用户和系统配置三套操作流程，界面支持键盘导航、表单输入、消息弹窗和表格展示，业务数据会自动保存到本地文件。
 
-这个项目已从纯C的旧版本完全重构为现代C++17应用。
+## 功能概览
 
-### 重构前后对比
+### 管理员
 
-| 方面 | 旧版本 | 新版本 |
-|------|--------|--------|
-| C++标准 | C with Class | C++17 |
-| 内存管理 | 手动指针 | `std::unique_ptr` 智能指针 |
-| 代码组织 | 单一文件 | 分层模块化设计 |
-| UI输出 | printf/scanf混用 | 统一使用cin/cout |
-| 数据容器 | 原始数组 | `std::vector`容器 |
-| 算法 | 手写循环 | STL算法（find_if, sort等） |
-| 界面 | 简单文本 | 美化的表格和卡片 |
-| 代码行数 | ~1600行 | ~2500行（模块化后） |
+- 管理员账号登录与创建
+- 查看全部书籍及库存
+- 添加、删除和编辑书籍信息
+- 单独调整书籍库存
+- 按价格排序书籍
+- 按编号查询书籍简介
+- 统计当前全部库存的总价值
 
-## 🚀 快速编译和运行
+### 普通用户
 
-### 编译
+- 用户注册与登录
+- 浏览当前可购买的书籍
+- 账户余额充值（需验证密码）
+- 购买书籍并自动扣减余额和库存
+- 申请 VIP（需验证密码）
+- VIP 购书享受九折优惠
+- 查看本次登录期间的购物清单与合计金额
+
+### 系统配置
+
+- 管理员身份验证
+- 查看管理员列表
+- 创建新管理员
+- 查看和删除用户
+- 清空书籍数据或用户数据
+
+## 界面与交互
+
+系统使用 FTXUI 构建全屏终端界面：
+
+- 使用方向键或 `j` / `k` 切换菜单项
+- 按 `Enter` 确认或提交
+- 使用 `Tab` / `Shift+Tab` 在表单控件之间切换
+- 密码输入框会隐藏输入内容
+- 关键操作通过弹窗反馈成功、错误或确认信息
+
+建议在支持 UTF-8 和 ANSI 控制序列的现代终端中运行，例如 Windows Terminal、PowerShell 7、常见 Linux 终端或 macOS Terminal。
+
+## 快速开始
+
+### 环境要求
+
+- CMake 3.14 或更高版本
+- 支持 C++17 的编译器
+  - Windows：Visual Studio 2019/2022
+  - Linux：GCC 7+ 或 Clang 5+
+  - macOS：Apple Clang
+- 首次配置时可访问网络，CMake 会自动下载 FTXUI v6.1.9
+
+### 配置与编译
+
 ```bash
-cd /home/dengxh/Library_Mangement_System
-mkdir -p build && cd build
-cmake ..
-make
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release
 ```
 
 ### 运行
+
+Windows（Visual Studio 等多配置生成器）：
+
+```powershell
+.\build\Release\library_system.exe
+```
+
+Windows（Ninja 等单配置生成器）：
+
+```powershell
+.\build\library_system.exe
+```
+
+Linux / macOS：
+
 ```bash
-./library_system
+./build/library_system
 ```
 
-## 📂 项目结构一览
+首次运行时还没有管理员数据，系统会引导创建第一个管理员账号。
 
-```
-src/
-├── Application.h/cpp          # 应用主控制类
-├── models/                    # 数据模型
-│   ├── User.h/cpp             # 用户数据模型
-│   ├── Admin.h/cpp            # 管理员数据模型  
-│   ├── Book.h/cpp             # 书籍数据模型
-│   └── ShoppingCart.h/cpp     # 购物车模型
-├── managers/                  # 数据管理层
-│   ├── UserManager.h/cpp      # 用户管理器
-│   ├── AdminManager.h/cpp     # 管理员管理器
-│   └── BookManager.h/cpp      # 书籍管理器
-├── utils/                     # 工具类
-│   └── UIManager.h/cpp        # UI管理器
-└── ui/                        # UI组件
-    └── MenuUI.h/cpp           # 菜单格式化
-```
+## 典型使用流程
 
-## 🎯 核心类概览
+1. 首次启动，创建管理员账号。
+2. 管理员登录并录入书籍、价格和库存。
+3. 在主菜单注册普通用户。
+4. 用户登录后充值余额，可选择申请 VIP。
+5. 用户浏览并购买书籍，系统同步更新余额和库存。
 
-### Models（数据模型）
-- **User** - 用户信息（名称、密码、余额、VIP）
-- **Admin** - 管理员信息（名称、密码）
-- **Book** - 书籍信息（ID、书名、作者、简介、价格、库存）
-- **ShoppingCart** - 购物车（管理购物项、计算总价）
+## 数据持久化
 
-### Managers（数据管理）
-所有Manager提供统一接口：
-- `loadFromFile()` - 从文件加载数据
-- `saveToFile()` - 保存数据到文件
-- `add(obj)` - 添加对象
-- `delete(id)` - 删除对象
-- `find(id)` - 查找对象
-- `getAll()` - 获取所有对象
+程序在**运行时的当前工作目录**读写以下文件：
 
-### UIManager（UI管理）
-- `printTitle(text)` - 打印标题框
-- `printMenuItem(index, text)` - 打印菜单项
-- `printSuccess/Error/Warning(msg)` - 打印提示信息
-- `pause()` - 暂停
-- `clearScreen()` - 清屏
+| 文件 | 保存内容 |
+| --- | --- |
+| `admin.dat` | 管理员名称和密码 |
+| `user.dat` | 用户名称、密码、余额和 VIP 状态 |
+| `book.dat` | 书籍编号、名称、作者、简介、价格和库存 |
 
-### MenuUI（菜单格式化）
-- `printBookTableHeader()` - 书籍表头
-- `printUserTableHeader()` - 用户表头
-- `printCartTableHeader()` - 购物车表头
-- `printXxxRow()` - 打印行数据
+这些文件已被 `.gitignore` 忽略，不会提交到仓库。若从其他目录启动可执行文件，程序会在那个目录查找或创建数据文件；希望固定数据位置时，请始终从同一个工作目录运行。
 
-### Application（应用主类）
-主要方法：
-- `run()` - 启动应用
-- `showLoginMenu()` - 显示登录菜单
-- `adminLogin/Menu()` - 管理员流程
-- `userLogin/Register/Menu()` - 用户流程
-- `systemConfig()` - 系统配置
+当前数据格式以空白字符分隔字段，因此账号、书名、作者和简介等输入不应包含空格。账号密码以明文保存在本地，此项目适合课程学习和本地演示，不应直接用于生产环境。
 
-## ✨ 现代C++特性使用
+## 项目结构
 
-### 1. 智能指针
-```cpp
-std::unique_ptr<UserManager> m_userManager;
-// 自动内存管理，避免内存泄漏
+```text
+.
+├── CMakeLists.txt              # 构建配置与 FTXUI 依赖
+├── main.cpp                    # 程序入口
+├── src/
+│   ├── Application.*           # 业务流程与各界面之间的协调
+│   ├── models/                 # Admin、User、Book、ShoppingCart
+│   ├── managers/               # 账号、用户和书籍的数据管理与持久化
+│   └── tui/                    # 当前使用的 FTXUI 界面
+└── docs/                       # 项目说明、重构记录和课程资料
 ```
 
-### 2. Lambda表达式
-```cpp
-auto it = std::find_if(m_users.begin(), m_users.end(),
-    [&name](const User& u) { return u.getName() == name; });
-```
+`main_old.cpp`、`CMakeLists_old.txt`、`src/ui/`、`src/utils/` 以及根目录的 `utils.*` 是重构前或过渡期代码，不在当前 CMake 目标中编译。当前界面实现以 `src/tui/` 为准。
 
-### 3. STL容器和算法
-```cpp
-std::vector<User> m_users;
-std::sort(m_books.begin(), m_books.end(),
-    [](const Book& a, const Book& b) { return a.getPrice() < b.getPrice(); });
-```
+## 代码分层
 
-### 4. const正确性
-```cpp
-const std::string& User::getName() const { return m_name; }
-const User* findUserByNameConst(const std::string& name) const;
-```
+- `models`：保存领域数据，并负责对象的序列化与反序列化。
+- `managers`：管理对象集合，提供查询、增删、排序和文件读写能力。
+- `tui`：只负责菜单、表单、表格和弹窗渲染。
+- `Application`：连接界面与业务逻辑，处理登录、购买、充值、库存变更等完整流程。
 
-### 5. 字符串处理
-```cpp
-// 使用std::string和std::stringstream，避免C风格字符串
-std::string User::serialize() const {
-    std::ostringstream oss;
-    oss << m_name << " " << m_password << " " << m_balance;
-    return oss.str();
-}
-```
+以购书为例：用户提交书籍编号和数量后，`Application` 会检查书籍、库存和余额，应用 VIP 折扣，随后扣减库存与余额、记录购物项，并将书籍和用户数据写回磁盘。
 
-## 📊 数据流示例
+## 开发说明
 
-### 用户购买书籍流程
-```
-用户输入 
-    ↓
-Application::userBuyBook()
-    ↓
-BookManager::findBookById() 获取书籍
-    ↓
-验证库存和余额
-    ↓
-Book::deductStock() - 减少库存
-User::deductBalance() - 扣除余额
-ShoppingCart::addItem() - 加入购物车
-    ↓
-BookManager::saveToFile() - 保存数据
-UserManager::saveToFile() - 保存数据
-    ↓
-MenuUI::printSuccess() - 显示成功信息
-```
+重新编译已有构建目录：
 
-## 🎨 界面美化示例
-
-### 菜单标题
-```
-============================================================
-||                      图书馆管理系统 - 登录              ||
-============================================================
-```
-
-### 表格显示
-```
-编号        书名           作者           简介           价格         库存
--------------------------------------------------------------------
-B001        C++程序设计    Bjarne Stroustrup  现代C++     89.99        5
-B002        设计模式       Gang of Four    经典著作        59.99        3
-```
-
-### 用户卡片
-```
-==================================================
-  用户: john_doe
-  余额: ¥1000.50
-  等级: VIP会员
-==================================================
-```
-
-## 🔄 编译和链接
-
-CMakeLists.txt自动处理：
-- 包含路径设置
-- 源文件编译
-- 链接优化（Linux: -O2，Windows: /O2）
-- 警告标志启用（-Wall, /W4）
-
-## 💾 数据文件格式
-
-### user.dat
-```
-username password balance vip
-john_doe secret123 1000.50 1
-```
-
-### admin.dat
-```
-admin admin123
-```
-
-### book.dat
-```
-id name author intro price stock
-B001 C++17参考 Bjarne C++标准库 89.99 5
-```
-
-## 🔧 常见操作
-
-### 查看所有源文件
 ```bash
-find src -name "*.h" -o -name "*.cpp" | sort
+cmake --build build --config Release
 ```
 
-### 清理构建
-```bash
-rm -rf build
-```
-
-### 重新编译
-```bash
-mkdir build && cd build && cmake .. && make
-```
-
-### 查看编译结果
-```bash
-file build/library_system
-ls -lh build/library_system
-```
-
-## 📖 进阶阅读
-
-- 查看 [README.md](README.md) 了解项目整体情况
-- 查看 [PROJECT_GUIDE.md](PROJECT_GUIDE.md) 了解详细的技术文档
-- 查看源代码注释了解具体实现
-
-## ⚙️ 系统要求
-
-| 项目 | 要求 |
-|------|------|
-| 操作系统 | Linux / Windows / macOS |
-| C++标准 | C++17 |
-| CMake | 版本 3.10+ |
-| 编译器 | GCC 7+, Clang 5+, MSVC 2015+ |
-| 磁盘空间 | ~5MB（包括编译输出） |
-
-## 🐛 调试技巧
-
-### 启用详细编译输出
-```bash
-make VERBOSE=1
-```
-
-### 编译单个源文件
-```bash
-cmake --build . --target CMakeFiles/library_system.dir/src/Application.cpp.o
-```
-
-### 查看CMake变量
-```bash
-cmake -L ..
-```
-
----
-
-**提示**: 如有问题，请查阅项目文档或检查源代码注释！
-
+如需重新生成构建配置，可删除本地 `build` 目录后再次执行“配置与编译”中的命令。更详细的历史说明可查看 [`docs/PROJECT_GUIDE.md`](docs/PROJECT_GUIDE.md) 和 [`docs/REFACTOR_SUMMARY.md`](docs/REFACTOR_SUMMARY.md)。

@@ -1,11 +1,9 @@
 #include "BookManager.h"
 #include <fstream>
-#include <iostream>
 
 bool BookManager::loadFromFile() {
     std::ifstream file(m_dataFile);
     if (!file.is_open()) {
-        std::cerr << "无法打开图书数据文件: " << m_dataFile << "\n";
         return false;
     }
 
@@ -23,7 +21,6 @@ bool BookManager::loadFromFile() {
 bool BookManager::saveToFile() const {
     std::ofstream file(m_dataFile, std::ios::trunc);
     if (!file.is_open()) {
-        std::cerr << "无法创建图书数据文件: " << m_dataFile << "\n";
         return false;
     }
 

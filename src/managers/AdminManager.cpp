@@ -1,12 +1,10 @@
 #include "AdminManager.h"
 #include <fstream>
-#include <iostream>
 #include <algorithm>
 
 bool AdminManager::loadFromFile() {
     std::ifstream file(m_dataFile);
     if (!file.is_open()) {
-        std::cerr << "无法打开管理员数据文件: " << m_dataFile << "\n";
         return false;
     }
 
@@ -24,7 +22,6 @@ bool AdminManager::loadFromFile() {
 bool AdminManager::saveToFile() const {
     std::ofstream file(m_dataFile, std::ios::trunc);
     if (!file.is_open()) {
-        std::cerr << "无法创建管理员数据文件: " << m_dataFile << "\n";
         return false;
     }
 

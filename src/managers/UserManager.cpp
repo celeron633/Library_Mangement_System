@@ -1,12 +1,10 @@
 #include "UserManager.h"
 #include <fstream>
-#include <iostream>
 #include <algorithm>
 
 bool UserManager::loadFromFile() {
     std::ifstream file(m_dataFile);
     if (!file.is_open()) {
-        std::cerr << "无法打开用户数据文件: " << m_dataFile << "\n";
         return false;
     }
 
@@ -24,7 +22,6 @@ bool UserManager::loadFromFile() {
 bool UserManager::saveToFile() const {
     std::ofstream file(m_dataFile, std::ios::trunc);
     if (!file.is_open()) {
-        std::cerr << "无法创建用户数据文件: " << m_dataFile << "\n";
         return false;
     }
 
