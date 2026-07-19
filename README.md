@@ -133,8 +133,6 @@ SQLite 存储不再以空格拆分新数据，因此书名、作者和简介可�
 └── docs/                       # 项目说明、重构记录和课程资料
 ```
 
-`CMakeLists_old.txt`、`src/ui/`、`src/utils/` 以及根目录的 `utils.*` 是重构前或过渡期代码，不在当前 CMake 目标中编译。当前界面实现以 `src/tui/` 为准。
-
 ## 代码分层
 
 - `database`：封装 SQLite 连接、数据库结构、事务和错误信息。
