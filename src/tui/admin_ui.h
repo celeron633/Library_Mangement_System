@@ -6,13 +6,15 @@
 
 #include "../models/Book.h"
 
-// Menu returns: 0=show all books, 1=book operations, 2=book inquiry, 3=back
+// Menu returns: 0=show all books, 1=book operations, 2=book inquiry,
+//               3=change password, 4=back
 int showAdminMenu();
 
 // Returns: 0=add, 1=delete, 2=edit info, 3=edit stock, 4=back
 int showAdminBookOperationsMenu();
 
-// Returns: 0=sort by price, 1=total price, 2=query intro, 3=back
+// Returns: 0=sort by price, 1=search, 2=low stock, 3=total price,
+//          4=query intro, 5=purchase history, 6=back
 int showAdminBookInquiryMenu();
 
 struct AddBookData {

@@ -5,19 +5,19 @@
 #include "tui/login_ui.h"
 #include "tui/system_ui.h"
 #include "tui/user_ui.h"
+#include "database/LegacyDataMigrator.h"
 
-#include <fstream>
 
 Application::Application()
-    : m_userManager(std::make_unique<UserManager>()),
-      m_adminManager(std::make_unique<AdminManager>()),
-      m_bookManager(std::make_unique<BookManager>()) {
+    : m_database(std::make_shared<Database>()),
+      m_userManager(std::make_unique<UserManager>(m_database)),
+      m_adminManager(std::make_unique<AdminManager>(m_database)),
+      m_bookManager(std::make_unique<BookManager>(m_database)),
+      m_purchaseManager(std::make_unique<PurchaseManager>(m_database)) {
 }
 
 void Application::run() {
-    m_adminManager->loadFromFile();
-    m_userManager->loadFromFile();
-    m_bookManager->loadFromFile();
+    if (!initializePersistence()) return;
 
     if (m_adminManager->getAdminCount() == 0) {
         showMessage("欢迎使用图书馆管理系统",
@@ -26,6 +26,32 @@ void Application::run() {
     }
 
     showLoginMenu();
+}
+
+bool Application::initializePersistence() {
+    if (!m_database->open("library.db") || !m_database->initialize()) {
+        showPersistenceError("初始化数据库");
+        return false;
+    }
+
+    if (!m_adminManager->load() || !m_userManager->load() ||
+        !m_bookManager->load()) {
+        showPersistenceError("读取数据库");
+        return false;
+    }
+
+    LegacyDataMigrator migrator(*m_database, *m_adminManager, *m_userManager,
+                                *m_bookManager);
+    if (!migrator.migrate(".")) {
+        showPersistenceError("导入旧版数据");
+        return false;
+    }
+    return true;
+}
+
+void Application::showPersistenceError(const std::string& action) {
+    showMessage("数据库错误", action + "失败：" + m_database->lastError(),
+                MessageType::ERROR_MSG);
 }
 
 void Application::showLoginMenu() {
@@ -90,7 +116,11 @@ void Application::adminCreateAccount() {
         }
 
         m_adminManager->addAdmin(Admin(data.name, data.password));
-        m_adminManager->saveToFile();
+        if (!m_adminManager->save()) {
+            m_adminManager->load();
+            showPersistenceError("创建管理员");
+            return;
+        }
         showMessage("成功", "管理员创建成功！", MessageType::SUCCESS);
 
         if (!showConfirmDialog("继续创建管理员？")) break;
@@ -99,7 +129,7 @@ void Application::adminCreateAccount() {
 
 void Application::adminMenu() {
     while (true) {
-        // 0=all books, 1=operations, 2=inquiry, 3=back
+        // 0=all books, 1=operations, 2=inquiry, 3=password, 4=back
         int choice = showAdminMenu();
         switch (choice) {
             case 0:
@@ -112,6 +142,9 @@ void Application::adminMenu() {
                 adminBookInquiry();
                 break;
             case 3:
+                adminChangePassword();
+                break;
+            case 4:
                 return;
             default:
                 break;
@@ -146,19 +179,29 @@ void Application::adminBookOperations() {
 
 void Application::adminBookInquiry() {
     while (true) {
-        // 0=sort by price, 1=total price, 2=query intro, 3=back
+        // 0=sort, 1=search, 2=low stock, 3=total, 4=intro,
+        // 5=purchases, 6=back
         int choice = showAdminBookInquiryMenu();
         switch (choice) {
             case 0:
                 sortBooksUI();
                 break;
             case 1:
-                calculateTotalPriceUI();
+                searchBooksUI();
                 break;
             case 2:
-                queryBookByIdUI();
+                showLowStockBooksUI();
                 break;
             case 3:
+                calculateTotalPriceUI();
+                break;
+            case 4:
+                queryBookByIdUI();
+                break;
+            case 5:
+                showAllPurchaseHistoryUI();
+                break;
+            case 6:
                 return;
             default:
                 break;
@@ -182,7 +225,11 @@ void Application::addBookUI() {
 
     m_bookManager->addBook(
         Book(data.id, data.name, data.author, data.intro, data.price, data.stock));
-    m_bookManager->saveToFile();
+    if (!m_bookManager->save()) {
+        m_bookManager->load();
+        showPersistenceError("添加书籍");
+        return;
+    }
     showMessage("成功", "书籍添加成功！", MessageType::SUCCESS);
 }
 
@@ -192,7 +239,11 @@ void Application::deleteBookUI() {
     if (id.empty()) return;
 
     if (m_bookManager->deleteBook(id)) {
-        m_bookManager->saveToFile();
+        if (!m_bookManager->save()) {
+            m_bookManager->load();
+            showPersistenceError("删除书籍");
+            return;
+        }
         showMessage("成功", "书籍删除成功！", MessageType::SUCCESS);
     } else {
         showMessage("错误", "未找到该书籍", MessageType::ERROR_MSG);
@@ -219,7 +270,11 @@ void Application::editBookUI() {
     book->setPrice(data.price);
     book->setStock(data.stock);
 
-    m_bookManager->saveToFile();
+    if (!m_bookManager->save()) {
+        m_bookManager->load();
+        showPersistenceError("编辑书籍");
+        return;
+    }
     showMessage("成功", "书籍编辑成功！", MessageType::SUCCESS);
 }
 
@@ -234,7 +289,11 @@ void Application::editBookStockUI() {
     }
 
     book->setStock(newStock);
-    m_bookManager->saveToFile();
+    if (!m_bookManager->save()) {
+        m_bookManager->load();
+        showPersistenceError("编辑库存");
+        return;
+    }
     showMessage("成功", "库存编辑成功！", MessageType::SUCCESS);
 }
 
@@ -267,6 +326,45 @@ void Application::calculateTotalPriceUI() {
         return;
     }
     showTotalPriceDialog(m_bookManager->getTotalPrice());
+}
+
+void Application::searchBooksUI() {
+    const std::string keyword =
+        showTextInputForm("搜索书籍", "关键词", "编号、书名或作者");
+    if (keyword.empty()) return;
+
+    showBooksTable(m_bookManager->search(keyword), "搜索结果：" + keyword);
+}
+
+void Application::showLowStockBooksUI() {
+    showBooksTable(m_bookManager->getLowStockBooks(), "低库存书籍（库存 ≤ 5）");
+}
+
+void Application::showAllPurchaseHistoryUI() {
+    showPurchaseHistory(m_purchaseManager->getAll(), "全部购买记录");
+}
+
+void Application::adminChangePassword() {
+    PasswordChangeData data = showChangePasswordForm("修改管理员密码");
+    if (!data.confirmed) return;
+
+    if (!verifyPassword(data.currentPassword, m_currentAdmin->getPassword())) {
+        showMessage("错误", "当前密码错误", MessageType::ERROR_MSG);
+        return;
+    }
+    if (data.newPassword == data.currentPassword) {
+        showMessage("提示", "新密码不能与当前密码相同", MessageType::WARNING);
+        return;
+    }
+
+    const std::string oldPassword = m_currentAdmin->getPassword();
+    m_currentAdmin->setPassword(data.newPassword);
+    if (!m_adminManager->save()) {
+        m_currentAdmin->setPassword(oldPassword);
+        showPersistenceError("修改管理员密码");
+        return;
+    }
+    showMessage("成功", "管理员密码已修改", MessageType::SUCCESS);
 }
 
 void Application::userLogin() {
@@ -304,14 +402,19 @@ void Application::userRegister() {
     }
 
     m_userManager->addUser(User(data.username, data.password, 0.0, false));
-    m_userManager->saveToFile();
+    if (!m_userManager->save()) {
+        m_userManager->load();
+        showPersistenceError("注册用户");
+        return;
+    }
     showMessage("成功", "注册成功！", MessageType::SUCCESS);
 }
 
 void Application::userMenu() {
     m_cart.clear();
     while (true) {
-        // 0=view books, 1=buy, 2=VIP, 3=charge, 4=cart, 5=back
+        // 0=view, 1=search, 2=buy, 3=VIP, 4=charge, 5=cart,
+        // 6=history, 7=password, 8=back
         int choice = showUserMenu(m_currentUser->getName(),
                                   m_currentUser->getBalance(),
                                   m_currentUser->isVIP());
@@ -320,18 +423,27 @@ void Application::userMenu() {
                 userViewBooks();
                 break;
             case 1:
-                userBuyBook();
+                searchBooksUI();
                 break;
             case 2:
-                userApplyVIP();
+                userBuyBook();
                 break;
             case 3:
-                userChargeBalance();
+                userApplyVIP();
                 break;
             case 4:
-                userViewCart();
+                userChargeBalance();
                 break;
             case 5:
+                userViewCart();
+                break;
+            case 6:
+                userViewPurchaseHistory();
+                break;
+            case 7:
+                userChangePassword();
+                break;
+            case 8:
                 return;
             default:
                 break;
@@ -368,11 +480,27 @@ void Application::userBuyBook() {
         return;
     }
 
+    const int oldStock = book->getStock();
+    const double oldBalance = m_currentUser->getBalance();
     book->deductStock(data.quantity);
     m_currentUser->deductBalance(totalPrice);
+
+    Purchase purchase;
+    purchase.userName = m_currentUser->getName();
+    purchase.bookId = book->getId();
+    purchase.bookName = book->getName();
+    purchase.unitPrice = book->getPrice();
+    purchase.quantity = data.quantity;
+    purchase.discountRate = m_currentUser->isVIP() ? 0.9 : 1.0;
+    purchase.total = totalPrice;
+
+    if (!m_purchaseManager->recordPurchase(purchase, *m_currentUser, *book)) {
+        book->setStock(oldStock);
+        m_currentUser->setBalance(oldBalance);
+        showPersistenceError("购买书籍");
+        return;
+    }
     m_cart.addItem(*book, data.quantity);
-    m_bookManager->saveToFile();
-    m_userManager->saveToFile();
 
     std::string msg = "购买成功！";
     if (m_currentUser->isVIP()) msg += "VIP享受9折优惠";
@@ -390,7 +518,11 @@ void Application::userApplyVIP() {
 
     if (verifyPassword(password, m_currentUser->getPassword())) {
         m_currentUser->setVIP(true);
-        m_userManager->saveToFile();
+        if (!m_userManager->save()) {
+            m_currentUser->setVIP(false);
+            showPersistenceError("申请 VIP");
+            return;
+        }
         showMessage("成功", "恭喜！你已成为VIP用户，可享受9折优惠！",
                     MessageType::SUCCESS);
     } else {
@@ -410,13 +542,46 @@ void Application::userChargeBalance() {
     double amount = showChargeBalanceForm();
     if (amount <= 0) return;
 
+    const double oldBalance = m_currentUser->getBalance();
     m_currentUser->addBalance(amount);
-    m_userManager->saveToFile();
+    if (!m_userManager->save()) {
+        m_currentUser->setBalance(oldBalance);
+        showPersistenceError("账户充值");
+        return;
+    }
     showMessage("成功", "充值成功！", MessageType::SUCCESS);
 }
 
 void Application::userViewCart() {
     showCartView(m_cart, m_currentUser->isVIP());
+}
+
+void Application::userViewPurchaseHistory() {
+    showPurchaseHistory(m_purchaseManager->getByUser(m_currentUser->getName()),
+                        "我的购买记录");
+}
+
+void Application::userChangePassword() {
+    PasswordChangeData data = showChangePasswordForm("修改用户密码");
+    if (!data.confirmed) return;
+
+    if (!verifyPassword(data.currentPassword, m_currentUser->getPassword())) {
+        showMessage("错误", "当前密码错误", MessageType::ERROR_MSG);
+        return;
+    }
+    if (data.newPassword == data.currentPassword) {
+        showMessage("提示", "新密码不能与当前密码相同", MessageType::WARNING);
+        return;
+    }
+
+    const std::string oldPassword = m_currentUser->getPassword();
+    m_currentUser->setPassword(data.newPassword);
+    if (!m_userManager->save()) {
+        m_currentUser->setPassword(oldPassword);
+        showPersistenceError("修改用户密码");
+        return;
+    }
+    showMessage("成功", "用户密码已修改", MessageType::SUCCESS);
 }
 
 void Application::systemConfig() {
@@ -480,7 +645,11 @@ void Application::deleteUserUI() {
     if (name.empty()) return;
 
     if (m_userManager->deleteUser(name)) {
-        m_userManager->saveToFile();
+        if (!m_userManager->save()) {
+            m_userManager->load();
+            showPersistenceError("删除用户");
+            return;
+        }
         showMessage("成功", "用户删除成功！", MessageType::SUCCESS);
     } else {
         showMessage("错误", "未找到该用户", MessageType::ERROR_MSG);
@@ -489,8 +658,10 @@ void Application::deleteUserUI() {
 
 void Application::clearBookData() {
     if (showConfirmDialog("此操作将删除所有书籍信息，是否继续？")) {
-        std::ofstream file("book.dat", std::ios::trunc);
-        file.close();
+        if (!m_bookManager->clearAll()) {
+            showPersistenceError("清除书籍数据");
+            return;
+        }
         showMessage("成功", "书籍数据已清除", MessageType::SUCCESS);
     } else {
         showMessage("提示", "操作已取消", MessageType::INFO);
@@ -498,9 +669,20 @@ void Application::clearBookData() {
 }
 
 void Application::clearUserData() {
-    if (showConfirmDialog("此操作将删除所有用户信息，是否继续？")) {
-        std::ofstream file("user.dat", std::ios::trunc);
-        file.close();
+    if (showConfirmDialog("此操作将删除所有用户及购买记录，是否继续？")) {
+        if (!m_database->beginTransaction()) {
+            showPersistenceError("清除用户数据");
+            return;
+        }
+        const bool success = m_database->execute("DELETE FROM purchases;") &&
+                             m_database->execute("DELETE FROM users;") &&
+                             m_database->commitTransaction();
+        if (!success) {
+            m_database->rollbackTransaction();
+            showPersistenceError("清除用户数据");
+            return;
+        }
+        m_userManager->load();
         showMessage("成功", "用户数据已清除", MessageType::SUCCESS);
     } else {
         showMessage("提示", "操作已取消", MessageType::INFO);

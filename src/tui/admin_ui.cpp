@@ -18,6 +18,7 @@ int showAdminMenu() {
         "  显示所有书籍  ",
         "  书籍操作      ",
         "  书籍查询      ",
+        "  修改登录密码  ",
         "  返回          ",
     };
     int selected = 0;
@@ -73,8 +74,11 @@ int showAdminBookInquiryMenu() {
 
     std::vector<std::string> entries = {
         "  按价格排序显示    ",
+        "  搜索书籍          ",
+        "  查看低库存书籍    ",
         "  计算所有图书总价  ",
         "  查询书籍简介      ",
+        "  查看购买记录      ",
         "  返回              ",
     };
     int selected = 0;
@@ -282,7 +286,7 @@ std::pair<std::string, int> showEditStockForm() {
             return;
         }
         try {
-            std::stoi(stock_str);
+            (void)std::stoi(stock_str);
             error_msg.clear();
             confirmed = true;
             screen.Exit();

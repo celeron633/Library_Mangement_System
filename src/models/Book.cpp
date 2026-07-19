@@ -85,8 +85,8 @@ std::string Book::serialize() const {
 Book Book::deserialize(const std::string& line) {
     std::istringstream iss(line);
     std::string id, name, author, introduction;
-    double price;
-    int stock;
+    double price = 0.0;
+    int stock = 0;
     
     iss >> id >> name >> author >> introduction >> price >> stock;
     

@@ -1,40 +1,83 @@
 #include "AdminManager.h"
-#include <fstream>
 #include <algorithm>
+#include <sqlite3.h>
 
-bool AdminManager::loadFromFile() {
-    std::ifstream file(m_dataFile);
-    if (!file.is_open()) {
+AdminManager::AdminManager(std::shared_ptr<Database> database)
+    : m_database(std::move(database)) {}
+
+bool AdminManager::load() {
+    sqlite3_stmt* statement = nullptr;
+    if (sqlite3_prepare_v2(m_database->handle(),
+                           "SELECT name, password FROM admins ORDER BY name;", -1,
+                           &statement, nullptr) != SQLITE_OK) {
+        m_database->setLastError(sqlite3_errmsg(m_database->handle()));
         return false;
     }
 
     m_admins.clear();
-    std::string line;
-    while (std::getline(file, line)) {
-        if (!line.empty()) {
-            m_admins.push_back(Admin::deserialize(line));
-        }
+    int result = SQLITE_ROW;
+    while ((result = sqlite3_step(statement)) == SQLITE_ROW) {
+        const auto* name = sqlite3_column_text(statement, 0);
+        const auto* password = sqlite3_column_text(statement, 1);
+        m_admins.emplace_back(
+            name ? reinterpret_cast<const char*>(name) : "",
+            password ? reinterpret_cast<const char*>(password) : "");
     }
-    file.close();
+
+    sqlite3_finalize(statement);
+    if (result != SQLITE_DONE) {
+        m_database->setLastError(sqlite3_errmsg(m_database->handle()));
+        return false;
+    }
     return true;
 }
 
-bool AdminManager::saveToFile() const {
-    std::ofstream file(m_dataFile, std::ios::trunc);
-    if (!file.is_open()) {
+bool AdminManager::save() const {
+    if (!m_database->beginTransaction()) return false;
+    if (!m_database->execute("DELETE FROM admins;")) {
+        m_database->rollbackTransaction();
         return false;
     }
 
-    for (const auto& admin : m_admins) {
-        file << admin.serialize() << "\n";
+    sqlite3_stmt* statement = nullptr;
+    if (sqlite3_prepare_v2(m_database->handle(),
+                           "INSERT INTO admins(name, password) VALUES(?, ?);", -1,
+                           &statement, nullptr) != SQLITE_OK) {
+        m_database->setLastError(sqlite3_errmsg(m_database->handle()));
+        m_database->rollbackTransaction();
+        return false;
     }
-    file.close();
+
+    bool success = true;
+    for (const auto& admin : m_admins) {
+        sqlite3_bind_text(statement, 1, admin.getName().c_str(), -1,
+                          SQLITE_TRANSIENT);
+        sqlite3_bind_text(statement, 2, admin.getPassword().c_str(), -1,
+                          SQLITE_TRANSIENT);
+        if (sqlite3_step(statement) != SQLITE_DONE) {
+            success = false;
+            m_database->setLastError(sqlite3_errmsg(m_database->handle()));
+            break;
+        }
+        sqlite3_reset(statement);
+        sqlite3_clear_bindings(statement);
+    }
+    sqlite3_finalize(statement);
+
+    if (!success) {
+        m_database->rollbackTransaction();
+        return false;
+    }
+    if (!m_database->commitTransaction()) {
+        m_database->rollbackTransaction();
+        return false;
+    }
     return true;
 }
 
-bool AdminManager::dataFileExists() const {
-    std::ifstream file(m_dataFile);
-    return file.good();
+bool AdminManager::clearAll() {
+    m_admins.clear();
+    return m_database->execute("DELETE FROM admins;");
 }
 
 bool AdminManager::addAdmin(const Admin& admin) {

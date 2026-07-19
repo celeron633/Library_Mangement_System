@@ -1,20 +1,22 @@
 #pragma once
 
 #include "../models/User.h"
+#include "../database/Database.h"
 #include <vector>
 #include <memory>
 
 class UserManager {
 private:
     std::vector<User> m_users;
-    const std::string m_dataFile = "user.dat";
+    std::shared_ptr<Database> m_database;
 
 public:
-    UserManager() = default;
+    explicit UserManager(std::shared_ptr<Database> database);
 
-    // File operations
-    bool loadFromFile();
-    bool saveToFile() const;
+    // Persistence
+    bool load();
+    bool save() const;
+    bool clearAll();
 
     // User operations
     bool addUser(const User& user);

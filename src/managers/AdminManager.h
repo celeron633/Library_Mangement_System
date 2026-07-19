@@ -1,20 +1,22 @@
 #pragma once
 
 #include "../models/Admin.h"
+#include "../database/Database.h"
+#include <memory>
 #include <vector>
 
 class AdminManager {
 private:
     std::vector<Admin> m_admins;
-    const std::string m_dataFile = "admin.dat";
+    std::shared_ptr<Database> m_database;
 
 public:
-    AdminManager() = default;
+    explicit AdminManager(std::shared_ptr<Database> database);
 
-    // File operations
-    bool loadFromFile();
-    bool saveToFile() const;
-    bool dataFileExists() const;
+    // Persistence
+    bool load();
+    bool save() const;
+    bool clearAll();
 
     // Admin operations
     bool addAdmin(const Admin& admin);

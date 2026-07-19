@@ -59,7 +59,7 @@ std::string User::serialize() const {
 User User::deserialize(const std::string& line) {
     std::istringstream iss(line);
     std::string name, password, vipStr;
-    double balance;
+    double balance = 0.0;
     
     iss >> name >> password >> balance >> vipStr;
     

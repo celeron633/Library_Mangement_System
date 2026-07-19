@@ -19,10 +19,13 @@ int showUserMenu(const std::string& username, double balance, bool isVIP) {
 
     std::vector<std::string> entries = {
         "  浏览书籍  ",
+        "  搜索书籍  ",
         "  购买书籍  ",
         "  申请VIP   ",
         "  充值余额  ",
         "  查看购物车",
+        "  购买记录  ",
+        "  修改密码  ",
         "  返回      ",
     };
     int selected = 0;
@@ -250,6 +253,58 @@ void showCartView(const ShoppingCart& cart, bool isVIP) {
         content.push_back(separator());
         content.push_back(btn_back->Render() | center);
         return vbox(content) | border;
+    });
+
+    screen.Loop(renderer);
+}
+
+void showPurchaseHistory(const std::vector<Purchase>& purchases,
+                         const std::string& title) {
+    auto screen = ScreenInteractive::Fullscreen();
+    auto btn_back = Button("  返回  ", screen.ExitLoopClosure());
+
+    auto make_table = [&]() -> Element {
+        if (purchases.empty()) {
+            return text("暂无购买记录") | center;
+        }
+
+        std::vector<std::vector<std::string>> table_data;
+        table_data.push_back(
+            {"时间", "用户", "编号", "书名", "单价", "数量", "折扣", "合计"});
+        for (const auto& purchase : purchases) {
+            std::ostringstream price, discount, total;
+            price << std::fixed << std::setprecision(2) << purchase.unitPrice;
+            discount << std::fixed << std::setprecision(1)
+                     << purchase.discountRate * 10 << "折";
+            total << std::fixed << std::setprecision(2) << purchase.total;
+            table_data.push_back(
+                {purchase.purchasedAt, purchase.userName, purchase.bookId,
+                 purchase.bookName, price.str(),
+                 std::to_string(purchase.quantity), discount.str(), total.str()});
+        }
+
+        auto table = Table(table_data);
+        table.SelectAll().Border(LIGHT);
+        table.SelectAll().SeparatorVertical(LIGHT);
+        table.SelectAll().SeparatorHorizontal(LIGHT);
+        table.SelectRow(0).Decorate(bold);
+        table.SelectRow(0).Border(DOUBLE);
+        table.SelectColumn(4).DecorateCells(align_right);
+        table.SelectColumn(5).DecorateCells(align_right);
+        table.SelectColumn(6).DecorateCells(align_right);
+        table.SelectColumn(7).DecorateCells(align_right);
+        return table.Render();
+    };
+
+    auto renderer = Renderer(btn_back, [&] {
+        return vbox({
+                   text(title) | bold | center,
+                   separator(),
+                   make_table(),
+                   separator(),
+                   btn_back->Render() | center,
+               }) |
+               border;
     });
 
     screen.Loop(renderer);

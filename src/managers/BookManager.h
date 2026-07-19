@@ -1,20 +1,23 @@
 #pragma once
 
 #include "../models/Book.h"
+#include "../database/Database.h"
 #include <vector>
 #include <algorithm>
+#include <memory>
 
 class BookManager {
 private:
     std::vector<Book> m_books;
-    const std::string m_dataFile = "book.dat";
+    std::shared_ptr<Database> m_database;
 
 public:
-    BookManager() = default;
+    explicit BookManager(std::shared_ptr<Database> database);
 
-    // File operations
-    bool loadFromFile();
-    bool saveToFile() const;
+    // Persistence
+    bool load();
+    bool save() const;
+    bool clearAll();
 
     // Book operations
     bool addBook(const Book& book);
@@ -24,6 +27,8 @@ public:
     Book* findBookByName(const std::string& name);
     bool bookExists(const std::string& id) const;
     bool bookNameExists(const std::string& name) const;
+    std::vector<Book> search(const std::string& keyword) const;
+    std::vector<Book> getLowStockBooks(int threshold = 5) const;
 
     // Getters
     const std::vector<Book>& getAllBooks() const;

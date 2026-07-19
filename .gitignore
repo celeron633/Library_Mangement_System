@@ -2,3 +2,6 @@
 bin/**
 build/**
 *.dat
+*.db
+*.db-shm
+*.db-wal

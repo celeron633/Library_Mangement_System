@@ -4,9 +4,11 @@
 #include <vector>
 
 #include "../models/Book.h"
+#include "../models/Purchase.h"
 #include "../models/ShoppingCart.h"
 
-// Returns: 0=view books, 1=buy book, 2=apply VIP, 3=charge balance, 4=view cart, 5=back
+// Returns: 0=view books, 1=search, 2=buy, 3=VIP, 4=charge, 5=cart,
+//          6=purchase history, 7=change password, 8=back
 int showUserMenu(const std::string& username, double balance, bool isVIP);
 
 struct BuyBookData {
@@ -21,3 +23,6 @@ BuyBookData showBuyBookForm(const std::vector<Book>& books);
 double showChargeBalanceForm();
 
 void showCartView(const ShoppingCart& cart, bool isVIP);
+
+void showPurchaseHistory(const std::vector<Purchase>& purchases,
+                         const std::string& title);
